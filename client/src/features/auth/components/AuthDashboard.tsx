@@ -1,4 +1,4 @@
-import { useGetMeQuery, useLogoutMutation } from "../";
+import { useGetMeQuery, useLogoutMutation } from "../authApi";
 
 export const AuthDashboard = () => {
     const { data: meData } = useGetMeQuery();

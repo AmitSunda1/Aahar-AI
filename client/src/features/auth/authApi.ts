@@ -4,6 +4,7 @@ import { ApiTags } from "../../app/api/apiTags";
 interface User {
     _id: string;
     email: string;
+    isEmailVerified: boolean;
     isCompletedOnboarding: boolean;
 }
 
@@ -15,6 +16,20 @@ interface AuthResponse {
     };
 }
 
+interface MessageResponse {
+    success: boolean;
+    message: string;
+}
+
+interface VerifyOtpRequest {
+    email: string;
+    otp: string;
+}
+
+interface ResendOtpRequest {
+    email: string;
+}
+
 export const authApi = baseApi.injectEndpoints({
     endpoints: (builder) => ({
         login: builder.mutation<AuthResponse, any>({
@@ -23,16 +38,29 @@ export const authApi = baseApi.injectEndpoints({
                 method: "POST",
                 body: credentials,
             }),
-            // When a user logs in successfully, we invalidate the 'Me' query to force a refetch
             invalidatesTags: [ApiTags.ME],
         }),
-        signup: builder.mutation<AuthResponse, any>({
+        signup: builder.mutation<MessageResponse, any>({
             query: (userData) => ({
                 url: "/auth/signup",
                 method: "POST",
                 body: userData,
             }),
+        }),
+        verifyOtp: builder.mutation<AuthResponse, VerifyOtpRequest>({
+            query: (body) => ({
+                url: "/auth/verify-otp",
+                method: "POST",
+                body,
+            }),
             invalidatesTags: [ApiTags.ME],
+        }),
+        resendOtp: builder.mutation<MessageResponse, ResendOtpRequest>({
+            query: (body) => ({
+                url: "/auth/resend-otp",
+                method: "POST",
+                body,
+            }),
         }),
         logout: builder.mutation<{ success: boolean; message: string }, void>({
             query: () => ({
@@ -51,6 +79,8 @@ export const authApi = baseApi.injectEndpoints({
 export const {
     useLoginMutation,
     useSignupMutation,
+    useVerifyOtpMutation,
+    useResendOtpMutation,
     useLogoutMutation,
     useGetMeQuery,
 } = authApi;

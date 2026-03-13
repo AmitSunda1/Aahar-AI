@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate, Navigate } from "react-router-dom";
-import { useLoginMutation, useGetMeQuery } from "../";
+import { useLoginMutation, useGetMeQuery } from "../authApi";
 
 export const LoginForm = () => {
     const [email, setEmail] = useState("");
@@ -32,47 +32,52 @@ export const LoginForm = () => {
     };
 
     return (
-        <div className="w-full max-w-md p-8 bg-white rounded-lg shadow-md">
-            <h2 className="mb-6 text-2xl font-bold text-center text-gray-800">Login</h2>
+        <div className="w-full max-w-md p-6 bg-base-black/80 backdrop-blur-md rounded-card border border-grey-700 w-[90%] mx-auto mt-auto mb-12 shadow-card-lg relative z-10">
+            <h2 className="mb-6 text-h2 font-bold text-center text-base-white">Welcome Back</h2>
 
             {error && (
-                <div className="p-3 mb-4 text-sm text-red-600 bg-red-100 rounded">
+                <div className="p-3 mb-4 text-body-sm text-semantic-error bg-semantic-error/10 border border-semantic-error rounded-input">
                     {(error as any)?.data?.message || "Failed to login. Please try again."}
                 </div>
             )}
 
             <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                    <label className="block mb-1 text-sm font-medium text-gray-700">Email</label>
+                    <label className="block mb-1 text-label-sm text-grey-300 uppercase tracking-wider">Email</label>
                     <input
                         type="email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         required
-                        className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                        className="w-full px-4 h-12 bg-base-black/50 border border-grey-700 rounded-input text-base-white placeholder-grey-500 focus:ring-1 focus:ring-accent-primary focus:border-accent-primary outline-none transition-colors"
+                        placeholder="Enter your email"
                     />
                 </div>
                 <div>
-                    <label className="block mb-1 text-sm font-medium text-gray-700">Password</label>
+                    <label className="block mb-1 text-label-sm text-grey-300 uppercase tracking-wider">Password</label>
                     <input
                         type="password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         required
-                        className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                        className="w-full px-4 h-12 bg-base-black/50 border border-grey-700 rounded-input text-base-white placeholder-grey-500 focus:ring-1 focus:ring-accent-primary focus:border-accent-primary outline-none transition-colors"
+                        placeholder="Enter your password"
                     />
                 </div>
                 <button
                     type="submit"
                     disabled={isLoading}
-                    className="w-full px-4 py-2 font-medium text-white bg-blue-600 rounded hover:bg-blue-700 disabled:opacity-50"
+                    className="w-full h-12 mt-2 font-semibold text-[14px] leading-[20px] text-base-white bg-accent-primary rounded-full hover:bg-accent-primary/90 disabled:opacity-50 transition-colors shadow-card-md"
                 >
                     {isLoading ? "Logging in..." : "Login"}
                 </button>
             </form>
 
-            <p className="mt-4 text-sm text-center text-gray-600">
-                Don't have an account? <a href="/signup" className="text-blue-600 hover:underline">Sign up</a>
+            <p className="mt-6 text-body-sm text-center text-grey-300">
+                Don't have an account?{" "}
+                <a href="/signup" className="text-base-white font-medium hover:underline">
+                    Sign up
+                </a>
             </p>
         </div>
     );

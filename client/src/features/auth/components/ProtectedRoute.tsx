@@ -1,27 +1,27 @@
 import { Navigate, Outlet } from "react-router-dom";
 import { useGetMeQuery } from "../authApi";
+import { Loader } from "../../../components/ui/Loader";
 
 export const ProtectedRoute = () => {
-    const { data, isLoading, isError } = useGetMeQuery();
+  const { data, isLoading, isFetching, isError } = useGetMeQuery();
 
-    if (isLoading) {
-        return (
-            <div className="flex items-center justify-center min-h-screen">
-                <div>Loading auth state...</div>
-            </div>
-        );
-    }
+  const isAuthenticating = (isLoading || isFetching) && !data;
 
-    if (isError || !data?.data?.user) {
-        return <Navigate to="/login" replace />;
-    }
+  if (isAuthenticating) return <Loader />;
 
-    const { isCompletedOnboarding } = data.data.user;
+  if (isError || !data?.data?.user) {
+    return <Navigate to="/login" replace />;
+  }
 
+  const { isCompletedOnboarding } = data.data.user;
 
-    if (!isCompletedOnboarding && window.location.pathname !== "/onboarding") {
-        return <Navigate to="/onboarding" replace />;
-    }
+  if (!isCompletedOnboarding && window.location.pathname !== "/onboarding") {
+    return <Navigate to="/onboarding" replace />;
+  }
 
-    return <Outlet />;
+  if (isCompletedOnboarding && window.location.pathname === "/onboarding") {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return <Outlet />;
 };

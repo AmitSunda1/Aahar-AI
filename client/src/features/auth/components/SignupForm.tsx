@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate, Navigate } from "react-router-dom";
-import { useSignupMutation, useGetMeQuery } from "../";
+import { useSignupMutation, useGetMeQuery } from "../authApi";
 
 export const SignupForm = () => {
     const [email, setEmail] = useState("");
@@ -19,61 +19,62 @@ export const SignupForm = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            const result = await signup({ email, password }).unwrap();
-
-            if (!result.data.user.isCompletedOnboarding) {
-                navigate("/onboarding");
-            } else {
-                navigate("/dashboard");
-            }
+            await signup({ email, password }).unwrap();
+            // Signup now sends OTP — redirect to verification page with the email in state
+            navigate("/verify-otp", { state: { email } });
         } catch (err) {
             console.error("Signup failed:", err);
         }
     };
 
     return (
-        <div className="w-full max-w-md p-8 bg-white rounded-lg shadow-md">
-            <h2 className="mb-6 text-2xl font-bold text-center text-gray-800">Sign Up</h2>
+        <div className="w-full max-w-md p-6 bg-base-black/80 backdrop-blur-md rounded-card border border-grey-700 w-[90%] mx-auto mt-auto mb-12 shadow-card-lg relative z-10">
+            <h2 className="mb-6 text-h2 font-bold text-center text-base-white">Create Account</h2>
 
             {error && (
-                <div className="p-3 mb-4 text-sm text-red-600 bg-red-100 rounded">
+                <div className="p-3 mb-4 text-body-sm text-semantic-error bg-semantic-error/10 border border-semantic-error rounded-input">
                     {(error as any)?.data?.message || "Failed to sign up. Please try again."}
                 </div>
             )}
 
             <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                    <label className="block mb-1 text-sm font-medium text-gray-700">Email</label>
+                    <label className="block mb-1 text-label-sm text-grey-300 uppercase tracking-wider">Email</label>
                     <input
                         type="email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         required
-                        className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                        className="w-full px-4 h-12 bg-base-black/50 border border-grey-700 rounded-input text-base-white placeholder-grey-500 focus:ring-1 focus:ring-accent-primary focus:border-accent-primary outline-none transition-colors"
+                        placeholder="Enter your email"
                     />
                 </div>
                 <div>
-                    <label className="block mb-1 text-sm font-medium text-gray-700">Password</label>
+                    <label className="block mb-1 text-label-sm text-grey-300 uppercase tracking-wider">Password</label>
                     <input
                         type="password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         required
                         minLength={6}
-                        className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                        className="w-full px-4 h-12 bg-base-black/50 border border-grey-700 rounded-input text-base-white placeholder-grey-500 focus:ring-1 focus:ring-accent-primary focus:border-accent-primary outline-none transition-colors"
+                        placeholder="Create a password (min 6 chars)"
                     />
                 </div>
                 <button
                     type="submit"
                     disabled={isLoading}
-                    className="w-full px-4 py-2 font-medium text-white bg-green-600 rounded hover:bg-green-700 disabled:opacity-50"
+                    className="w-full h-12 mt-2 font-semibold text-[14px] leading-[20px] text-base-white bg-accent-primary rounded-full hover:bg-accent-primary/90 disabled:opacity-50 transition-colors shadow-card-md"
                 >
                     {isLoading ? "Signing up..." : "Sign Up"}
                 </button>
             </form>
 
-            <p className="mt-4 text-sm text-center text-gray-600">
-                Already have an account? <a href="/login" className="text-blue-600 hover:underline">Log in</a>
+            <p className="mt-6 text-body-sm text-center text-grey-300">
+                Already have an account?{" "}
+                <a href="/login" className="text-base-white font-medium hover:underline">
+                    Log in
+                </a>
             </p>
         </div>
     );

@@ -1,1 +1,31 @@
 @import "tailwindcss";
+@config "../tailwind.config.ts";
+
+@layer base {
+    body {
+        @apply bg-grey-100 text-base-black font-sans antialiased flex justify-center;
+    }
+
+    /* The main App container to enforce the 450px max width mobile-first design */
+    #root {
+        @apply w-full max-w-[450px] min-h-screen bg-base-white relative overflow-hidden shadow-card-lg;
+    }
+}
+
+@layer utilities {
+
+    /* Hide scrollbar but keep scrollability — used by the Scroller drum-roll */
+    .scrollbar-hide::-webkit-scrollbar {
+        display: none;
+    }
+
+    .scrollbar-hide {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+
+    /* Safe-area padding for sticky bottom buttons on iOS-style viewports */
+    .pb-safe {
+        padding-bottom: env(safe-area-inset-bottom, 16px);
+    }
+}
