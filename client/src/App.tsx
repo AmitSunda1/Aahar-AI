@@ -8,6 +8,11 @@ import { VerifyOtp } from "./pages/VerifyOtp";
 import { Dashboard } from "./pages/Dashboard";
 import { Onboarding } from "./pages/Onboarding";
 import { ProtectedRoute } from "./features/auth";
+import { AppLayout } from "./components/layout/AppLayout";
+import { LogFood } from "./pages/LogFood";
+import { Workout } from "./pages/Workout";
+import { Profile } from "./pages/Profile";
+import { ScanFood } from "./pages/ScanFood";
 
 function App() {
   return (
@@ -22,9 +27,15 @@ function App() {
 
           {/* Protected Routes */}
           <Route element={<ProtectedRoute />}>
-            <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/onboarding" element={<Onboarding />} />
-            {/* Catch-all for authenticated users inside protected space */}
+
+            <Route element={<AppLayout />}>
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/log-food" element={<LogFood />} />
+              <Route path="/log-food/scan" element={<ScanFood />} />
+              <Route path="/workout" element={<Workout />} />
+              <Route path="/profile" element={<Profile />} />
+            </Route>
           </Route>
 
           {/* Catch-all redirect to Splash for unknown public routes */}

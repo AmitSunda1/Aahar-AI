@@ -1,9 +1,11 @@
-import { Navigate, Outlet } from "react-router-dom";
+import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useGetMeQuery } from "../authApi";
 import { Loader } from "../../../components/ui/Loader";
 
 export const ProtectedRoute = () => {
+  const location = useLocation();
   const { data, isLoading, isFetching, isError } = useGetMeQuery();
+  const pathname = location.pathname;
 
   const isAuthenticating = (isLoading || isFetching) && !data;
 
@@ -15,11 +17,11 @@ export const ProtectedRoute = () => {
 
   const { isCompletedOnboarding } = data.data.user;
 
-  if (!isCompletedOnboarding && window.location.pathname !== "/onboarding") {
+  if (!isCompletedOnboarding && pathname !== "/onboarding") {
     return <Navigate to="/onboarding" replace />;
   }
 
-  if (isCompletedOnboarding && window.location.pathname === "/onboarding") {
+  if (isCompletedOnboarding && pathname === "/onboarding") {
     return <Navigate to="/dashboard" replace />;
   }
 

@@ -27,8 +27,17 @@ export const Step4Height = () => {
       subtitle="This helps us calculate your BMI and nutritional requirements."
       skippable
       onContinue={() => {
-        const value = unit === "cm" ? cmValue : ftValue;
-        dispatch(updateDraft({ height: { value: value as number, unit } }));
+        if (unit === "cm") {
+          dispatch(updateDraft({ height: { value: cmValue, unit: "cm" } }));
+        } else {
+          // Parse e.g. "5'7\"" → total inches → cm so a real number is always stored
+          const parts = ftValue.match(/^(\d+)'(\d+)/);
+          const totalInches = parts
+            ? parseInt(parts[1]) * 12 + parseInt(parts[2])
+            : 67; // default ~5'7"
+          const cm = Math.round(totalInches * 2.54);
+          dispatch(updateDraft({ height: { value: cm, unit: "cm" } }));
+        }
       }}
     >
       <UnitToggle options={["cm", "ft"]} value={unit} onChange={setUnit} />

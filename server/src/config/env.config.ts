@@ -23,6 +23,9 @@ const envSchema = z.object({
 
   EMAIL_USER: z.string().email("EMAIL_USER must be a valid email"),
   EMAIL_APP_PASSWORD: z.string().min(1, "EMAIL_APP_PASSWORD is required"),
+
+  GEMINI_API_KEY: z.string().min(1).optional(),
+  GEMINI_MODEL: z.string().min(1).optional().default("gemini-2.0-flash"),
 });
 
 /**
@@ -41,7 +44,7 @@ function validateEnv() {
       });
 
       console.error(
-        "\n⚠️  Please check your .env file and ensure all required variables are set correctly.\n"
+        "\n⚠️  Please check your .env file and ensure all required variables are set correctly.\n",
       );
       process.exit(1);
     }
