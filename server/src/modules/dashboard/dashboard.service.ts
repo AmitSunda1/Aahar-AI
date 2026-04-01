@@ -176,6 +176,7 @@ export const buildGeminiMealPlanPrompt = (
     waterMl,
     microLimits,
     medicalOverridesApplied,
+    safety,
   } = nutritionProfile;
 
   const dietaryPrefs = (user.dietaryPreferences as string[]) ?? [];
@@ -204,6 +205,17 @@ export const buildGeminiMealPlanPrompt = (
     dietaryRules.push("Lactose intolerant — NO dairy products");
 
   const medicalRules = medicalOverridesApplied.map((o) => o.description);
+  const safetyRules: string[] = [];
+  if (safety.conservativeModeApplied) {
+    safetyRules.push(
+      "Conservative safety mode is active. Avoid aggressive deficits/surpluses and keep meal planning clinically cautious.",
+    );
+  }
+  if (safety.needsClinicianReview) {
+    safetyRules.push(
+      `Unknown conditions requiring clinician review: ${safety.unknownMedicalConditions.join(", ")}`,
+    );
+  }
 
   const exampleDay = {
     dayNumber: 1,
@@ -283,6 +295,12 @@ export const buildGeminiMealPlanPrompt = (
   if (medicalRules.length) {
     lines.push("=== MEDICAL CONDITION ADJUSTMENTS ===");
     medicalRules.forEach((r) => lines.push(`• ${r}`));
+    lines.push("");
+  }
+
+  if (safetyRules.length) {
+    lines.push("=== SAFETY MODE CONTEXT ===");
+    safetyRules.forEach((r) => lines.push(`• ${r}`));
     lines.push("");
   }
 

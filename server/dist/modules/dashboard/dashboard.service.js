@@ -91,7 +91,7 @@ const buildPlanFromProfile = (user) => {
 exports.buildPlanFromProfile = buildPlanFromProfile;
 // ─── Build the Gemini meal plan prompt ───────────────────────────────────────
 const buildGeminiMealPlanPrompt = (user, nutritionProfile) => {
-    const { dailyCalorieTarget, macros, waterMl, microLimits, medicalOverridesApplied, } = nutritionProfile;
+    const { dailyCalorieTarget, macros, waterMl, microLimits, medicalOverridesApplied, safety, } = nutritionProfile;
     const dietaryPrefs = user.dietaryPreferences ?? [];
     const medicalConds = user.medicalConditions ?? [];
     const dietaryRules = [];
@@ -112,6 +112,13 @@ const buildGeminiMealPlanPrompt = (user, nutritionProfile) => {
     if (medicalConds.some((c) => /lactose/i.test(c)))
         dietaryRules.push("Lactose intolerant — NO dairy products");
     const medicalRules = medicalOverridesApplied.map((o) => o.description);
+    const safetyRules = [];
+    if (safety.conservativeModeApplied) {
+        safetyRules.push("Conservative safety mode is active. Avoid aggressive deficits/surpluses and keep meal planning clinically cautious.");
+    }
+    if (safety.needsClinicianReview) {
+        safetyRules.push(`Unknown conditions requiring clinician review: ${safety.unknownMedicalConditions.join(", ")}`);
+    }
     const exampleDay = {
         dayNumber: 1,
         dayLabel: "Monday",
@@ -187,6 +194,11 @@ const buildGeminiMealPlanPrompt = (user, nutritionProfile) => {
     if (medicalRules.length) {
         lines.push("=== MEDICAL CONDITION ADJUSTMENTS ===");
         medicalRules.forEach((r) => lines.push(`• ${r}`));
+        lines.push("");
+    }
+    if (safetyRules.length) {
+        lines.push("=== SAFETY MODE CONTEXT ===");
+        safetyRules.forEach((r) => lines.push(`• ${r}`));
         lines.push("");
     }
     lines.push("=== MEAL PLAN REQUIREMENTS ===", "1. Generate exactly 7 day objects (dayNumber 1-7, Monday-Sunday).", "2. Each day must include: breakfast, mid_morning, lunch, dinner.", "   Add pre_workout and post_workout on 3-4 training days (vary which days).", "3. Each meal must have 2-3 alternative options with different ingredients but same target macros.", "4. Each option must list ALL ingredients with exact quantities (grams, pieces, or cups).", "5. timingNote must be specific: e.g. 'Eat 60-90 min before your workout', 'Within 30 min of waking', 'At least 2 hours before bed'.", "6. Use Indian food: dals, sabzis, rotis, rice, idli, dosa, poha, upma, khichdi, paneer, curd, chaat, sprouts, etc.", "7. Vary meals across all 7 days — no repeated option names on consecutive days.", "8. Approximate macros: protein*4 + carbs*4 + fat*9 = calories.", "9. Meal calorie split for standard day: Breakfast 22%, Mid-morning 10%, Lunch 30%, Dinner 28%, Evening snack 10%.", "   On training days add pre_workout (~8%) and post_workout (~12%) and reduce dinner proportionally.", "10. workoutNote: 1-2 sentence exercise suggestion for the day.", "11. habitNote: one actionable lifestyle or nutrition habit for the day.", "12. weekSummary: 1-2 sentence coaching summary for the week.", "", "Be safe, practical, and strictly obey all dietary and medical rules.");

@@ -33,6 +33,19 @@ export const DIETARY_PREFERENCES = [
 ] as const;
 export type DietaryPreference = (typeof DIETARY_PREFERENCES)[number];
 
+export const CANONICAL_MEDICAL_CONDITIONS = [
+  "pcos",
+  "diabetes",
+  "ckd",
+  "diabetic_kidney_disease",
+  "hypertension",
+  "thyroid",
+  "lactose_intolerance",
+  "pregnancy",
+] as const;
+export type CanonicalMedicalCondition =
+  (typeof CANONICAL_MEDICAL_CONDITIONS)[number];
+
 export interface IMeasurement {
   value: number;
   unit: string;

@@ -3,7 +3,7 @@
 // All consumers (model, validators, controllers) import from here —
 // so adding / removing an enum value only happens in one place.
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.DIETARY_PREFERENCES = exports.ACTIVITY_LEVELS = exports.GOALS = exports.GENDERS = void 0;
+exports.CANONICAL_MEDICAL_CONDITIONS = exports.DIETARY_PREFERENCES = exports.ACTIVITY_LEVELS = exports.GOALS = exports.GENDERS = void 0;
 exports.GENDERS = ["male", "female", "other"];
 exports.GOALS = [
     "lose_weight",
@@ -26,4 +26,14 @@ exports.DIETARY_PREFERENCES = [
     "dairy_free",
     "nut_free",
     "soy_free",
+];
+exports.CANONICAL_MEDICAL_CONDITIONS = [
+    "pcos",
+    "diabetes",
+    "ckd",
+    "diabetic_kidney_disease",
+    "hypertension",
+    "thyroid",
+    "lactose_intolerance",
+    "pregnancy",
 ];
