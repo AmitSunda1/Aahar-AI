@@ -32,9 +32,10 @@ app.use(cors(corsOptions));
 
 app.use(cookieParser());
 
-// Apply express.json() to all other routes
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// Increase size limits to support base64-encoded images from mobile devices
+// Base64 encoding increases size by ~33%, so 50MB limit supports ~37MB images
+app.use(express.json({ limit: "50mb" }));
+app.use(express.urlencoded({ limit: "50mb", extended: true }));
 
 app.use("/api/v1", v1Routes);
 

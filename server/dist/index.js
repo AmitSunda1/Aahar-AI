@@ -29,9 +29,10 @@ const corsOptions = {
 };
 app.use((0, cors_1.default)(corsOptions));
 app.use((0, cookie_parser_1.default)());
-// Apply express.json() to all other routes
-app.use(express_1.default.json());
-app.use(express_1.default.urlencoded({ extended: true }));
+// Increase size limits to support base64-encoded images from mobile devices
+// Base64 encoding increases size by ~33%, so 50MB limit supports ~37MB images
+app.use(express_1.default.json({ limit: "50mb" }));
+app.use(express_1.default.urlencoded({ limit: "50mb", extended: true }));
 app.use("/api/v1", index_1.default);
 if (env_config_1.env.NODE_ENV === "production") {
     const buildPath = path_1.default.join(__dirname, "..", "..", "client", "dist");
