@@ -8,7 +8,6 @@ const http_1 = require("http");
 const dotenv_1 = __importDefault(require("dotenv"));
 const morgan_1 = __importDefault(require("morgan"));
 const cors_1 = __importDefault(require("cors"));
-const path_1 = __importDefault(require("path"));
 const env_config_1 = require("./config/env.config");
 const db_config_1 = __importDefault(require("./config/db.config"));
 const index_1 = __importDefault(require("./routes/v1/index"));
@@ -34,13 +33,6 @@ app.use((0, cookie_parser_1.default)());
 app.use(express_1.default.json({ limit: "50mb" }));
 app.use(express_1.default.urlencoded({ limit: "50mb", extended: true }));
 app.use("/api/v1", index_1.default);
-if (env_config_1.env.NODE_ENV === "production") {
-    const buildPath = path_1.default.join(__dirname, "..", "..", "client", "dist");
-    app.use(express_1.default.static(buildPath));
-    app.get("*", (req, res) => {
-        res.sendFile(path_1.default.resolve(buildPath, "index.html"));
-    });
-}
 app.use(notFound_1.default);
 app.use(errorHandler_1.default);
 const args = process.argv.slice(2);
