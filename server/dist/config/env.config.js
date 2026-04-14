@@ -14,6 +14,18 @@ const envSchema = zod_1.z.object({
     PORT: zod_1.z.string().transform(Number).default(8000),
     MONGO_URI: zod_1.z.string().min(1, "MONGO_URI is required"),
     FRONTEND_URL: zod_1.z.string().url("FRONTEND_URL must be a valid URL"),
+    FRONTEND_URLS: zod_1.z
+        .string()
+        .optional()
+        .transform((value) => {
+        if (!value)
+            return [];
+        return value
+            .split(",")
+            .map((origin) => origin.trim())
+            .filter(Boolean);
+    })
+        .refine((origins) => origins.every((origin) => zod_1.z.string().url().safeParse(origin).success), "FRONTEND_URLS must be a comma-separated list of valid URLs"),
     JWT_ACCESS_SECRET: zod_1.z
         .string()
         .min(32, "JWT_ACCESS_SECRET must be at least 32 characters"),

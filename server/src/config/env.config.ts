@@ -11,6 +11,22 @@ const envSchema = z.object({
 
   MONGO_URI: z.string().min(1, "MONGO_URI is required"),
   FRONTEND_URL: z.string().url("FRONTEND_URL must be a valid URL"),
+  FRONTEND_URLS: z
+    .string()
+    .optional()
+    .transform((value) => {
+      if (!value) return [];
+
+      return value
+        .split(",")
+        .map((origin) => origin.trim())
+        .filter(Boolean);
+    })
+    .refine(
+      (origins) =>
+        origins.every((origin) => z.string().url().safeParse(origin).success),
+      "FRONTEND_URLS must be a comma-separated list of valid URLs",
+    ),
 
   JWT_ACCESS_SECRET: z
     .string()

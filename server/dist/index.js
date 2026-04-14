@@ -20,8 +20,20 @@ const app = (0, express_1.default)();
 if (env_config_1.env.NODE_ENV === "development") {
     app.use((0, morgan_1.default)("dev"));
 }
+const allowedOrigins = [env_config_1.env.FRONTEND_URL, ...env_config_1.env.FRONTEND_URLS];
 const corsOptions = {
-    origin: env_config_1.env.FRONTEND_URL,
+    origin: (origin, callback) => {
+        // Allow non-browser requests (no Origin header)
+        if (!origin) {
+            callback(null, true);
+            return;
+        }
+        if (allowedOrigins.includes(origin)) {
+            callback(null, true);
+            return;
+        }
+        callback(new Error(`CORS blocked for origin: ${origin}`));
+    },
     methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
     credentials: true,
     allowedHeaders: ["Content-Type", "Authorization", "X-VERIFY", "x-verify"],

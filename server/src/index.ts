@@ -21,8 +21,26 @@ if (env.NODE_ENV === "development") {
   app.use(morgan("dev"));
 }
 
+const allowedOrigins = [env.FRONTEND_URL, ...env.FRONTEND_URLS];
+
 const corsOptions = {
-  origin: env.FRONTEND_URL,
+  origin: (
+    origin: string | undefined,
+    callback: (err: Error | null, allow?: boolean) => void,
+  ) => {
+    // Allow non-browser requests (no Origin header)
+    if (!origin) {
+      callback(null, true);
+      return;
+    }
+
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+      return;
+    }
+
+    callback(new Error(`CORS blocked for origin: ${origin}`));
+  },
   methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
   credentials: true,
   allowedHeaders: ["Content-Type", "Authorization", "X-VERIFY", "x-verify"],
