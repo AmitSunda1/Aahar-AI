@@ -8,6 +8,8 @@ import {
   verifyOtp,
   resendOtp,
   changePassword,
+  forgotPassword,
+  resetPassword,
 } from "./auth.controller";
 import { authenticate } from "../../middlewares/auth.middleware";
 
@@ -19,6 +21,8 @@ router.post("/verify-otp", verifyOtp);
 router.post("/resend-otp", resendOtp);
 router.post("/refresh", refresh);
 router.post("/logout", logout);
+router.post("/forgot-password", forgotPassword);
+router.post("/reset-password", resetPassword);
 router.get("/me", authenticate, getMe);
 router.post("/change-password", authenticate, changePassword);
 

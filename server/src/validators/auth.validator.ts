@@ -18,3 +18,12 @@ export const verifyOtpValidator = z.object({
 export const resendOtpValidator = z.object({
   email: z.string().email("Please provide a valid email"),
 });
+
+export const forgotPasswordValidator = z.object({
+  email: z.string().email("Please provide a valid email"),
+});
+
+export const resetPasswordValidator = z.object({
+  token: z.string().min(1, "Reset token is required"),
+  newPassword: z.string().min(6, "Password must be at least 6 characters"),
+});

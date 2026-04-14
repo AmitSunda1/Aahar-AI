@@ -13,6 +13,8 @@ router.post("/verify-otp", auth_controller_1.verifyOtp);
 router.post("/resend-otp", auth_controller_1.resendOtp);
 router.post("/refresh", auth_controller_1.refresh);
 router.post("/logout", auth_controller_1.logout);
+router.post("/forgot-password", auth_controller_1.forgotPassword);
+router.post("/reset-password", auth_controller_1.resetPassword);
 router.get("/me", auth_middleware_1.authenticate, auth_controller_1.getMe);
 router.post("/change-password", auth_middleware_1.authenticate, auth_controller_1.changePassword);
 exports.default = router;

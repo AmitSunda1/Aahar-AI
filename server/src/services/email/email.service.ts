@@ -1,5 +1,6 @@
 import { nodemailerProvider } from "./providers/nodemailer.provider";
 import { otpEmailTemplate } from "./templates/otp.template";
+import { resetPasswordEmailTemplate } from "./templates/reset-password.template";
 
 // ─── Contracts ────────────────────────────────────────────────────────────────
 
@@ -31,5 +32,16 @@ export const sendOtpEmail = async (to: string, otp: string): Promise<void> => {
     to,
     subject: "Your Aahar AI Verification Code",
     html: otpEmailTemplate(otp),
+  });
+};
+
+export const sendResetPasswordEmail = async (
+  to: string,
+  resetLink: string,
+): Promise<void> => {
+  await sendMail({
+    to,
+    subject: "Reset your Aahar AI password",
+    html: resetPasswordEmailTemplate(resetLink),
   });
 };

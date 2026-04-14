@@ -54,6 +54,15 @@ interface ResendOtpRequest {
   email: string;
 }
 
+interface ForgotPasswordRequest {
+  email: string;
+}
+
+interface ResetPasswordRequest {
+  token: string;
+  newPassword: string;
+}
+
 export const authApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     login: builder.mutation<AuthResponse, any>({
@@ -85,6 +94,21 @@ export const authApi = baseApi.injectEndpoints({
         method: "POST",
         body,
       }),
+    }),
+    forgotPassword: builder.mutation<MessageResponse, ForgotPasswordRequest>({
+      query: (body) => ({
+        url: "/auth/forgot-password",
+        method: "POST",
+        body,
+      }),
+    }),
+    resetPassword: builder.mutation<AuthResponse, ResetPasswordRequest>({
+      query: (body) => ({
+        url: "/auth/reset-password",
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: [ApiTags.ME],
     }),
     logout: builder.mutation<{ success: boolean; message: string }, void>({
       query: () => ({
@@ -122,6 +146,8 @@ export const {
   useSignupMutation,
   useVerifyOtpMutation,
   useResendOtpMutation,
+  useForgotPasswordMutation,
+  useResetPasswordMutation,
   useLogoutMutation,
   useGetMeQuery,
   useChangePasswordMutation,

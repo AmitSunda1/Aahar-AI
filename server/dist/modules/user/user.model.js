@@ -64,6 +64,14 @@ const userSchema = new mongoose_1.Schema({
         type: Date,
         select: false,
     },
+    passwordResetToken: {
+        type: String,
+        select: false,
+    },
+    passwordResetExpires: {
+        type: Date,
+        select: false,
+    },
     isCompletedOnboarding: {
         type: Boolean,
         default: false,

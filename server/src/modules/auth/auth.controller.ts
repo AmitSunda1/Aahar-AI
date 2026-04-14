@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import bcrypt from "bcryptjs";
+import crypto from "crypto";
 import User from "../user/user.model";
 import AppError from "../../utils/appError";
 import asyncHandler from "../../utils/asyncHandler";
@@ -13,14 +14,20 @@ import {
   clearCookiesFromResponse,
 } from "../../utils/cookie";
 import { generateOtp } from "../../utils/otp";
-import { sendOtpEmail } from "../../services/email/email.service";
+import {
+  sendOtpEmail,
+  sendResetPasswordEmail,
+} from "../../services/email/email.service";
 import mongoose from "mongoose";
 import {
   signupValidator,
   loginValidator,
   verifyOtpValidator,
   resendOtpValidator,
+  forgotPasswordValidator,
+  resetPasswordValidator,
 } from "../../validators/auth.validator";
+import { env } from "../../config/env.config";
 
 const createSendToken = (
   user: any,
@@ -293,6 +300,92 @@ export const logout = asyncHandler(
       success: true,
       message: "Successfully logged out",
     });
+  },
+);
+
+// ─────────────────────────────────────────────
+// FORGOT PASSWORD
+// ─────────────────────────────────────────────
+export const forgotPassword = asyncHandler(
+  async (req: Request, res: Response, next: any) => {
+    const parsed = forgotPasswordValidator.safeParse(req.body);
+    if (!parsed.success) {
+      return next(
+        new AppError(parsed.error.issues[0].message, 400, "VALIDATION_ERROR"),
+      );
+    }
+
+    const { email } = parsed.data;
+    const user = await User.findOne({ email }).select("+isEmailVerified");
+
+    if (!user) {
+      return next(new AppError("No account found with this email", 404));
+    }
+
+    if (!user.isEmailVerified) {
+      return next(
+        new AppError(
+          "Please verify your email before requesting a password reset.",
+          403,
+          "EMAIL_NOT_VERIFIED",
+        ),
+      );
+    }
+
+    const resetToken = crypto.randomBytes(32).toString("hex");
+    const hashedResetToken = crypto
+      .createHash("sha256")
+      .update(resetToken)
+      .digest("hex");
+
+    user.passwordResetToken = hashedResetToken;
+    user.passwordResetExpires = new Date(Date.now() + 15 * 60 * 1000);
+    await user.save();
+
+    const resetLink = `${env.FRONTEND_URL}/reset-password?token=${resetToken}`;
+    await sendResetPasswordEmail(user.email, resetLink);
+
+    res.status(200).json({
+      success: true,
+      message: "Password reset link sent to your email",
+    });
+  },
+);
+
+// ─────────────────────────────────────────────
+// RESET PASSWORD
+// ─────────────────────────────────────────────
+export const resetPassword = asyncHandler(
+  async (req: Request, res: Response, next: any) => {
+    const parsed = resetPasswordValidator.safeParse(req.body);
+    if (!parsed.success) {
+      return next(
+        new AppError(parsed.error.issues[0].message, 400, "VALIDATION_ERROR"),
+      );
+    }
+
+    const { token, newPassword } = parsed.data;
+    const hashedResetToken = crypto
+      .createHash("sha256")
+      .update(token)
+      .digest("hex");
+
+    const user = await User.findOne({
+      passwordResetToken: hashedResetToken,
+      passwordResetExpires: { $gt: new Date() },
+    }).select("+password");
+
+    if (!user) {
+      return next(new AppError("Reset link is invalid or has expired", 400));
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    user.password = hashedPassword;
+    user.passwordResetToken = undefined;
+    user.passwordResetExpires = undefined;
+    await user.save();
+
+    createSendToken(user, 200, res, "Password reset successful");
   },
 );
 

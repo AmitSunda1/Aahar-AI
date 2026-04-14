@@ -123,6 +123,15 @@ export const LoginForm = () => {
           Sign up
         </Link>
       </p>
+      <p className="mt-3 text-body-sm text-center text-grey-300">
+        Forgot your password?{" "}
+        <Link
+          to="/forgot-password"
+          className="text-base-white font-medium hover:underline"
+        >
+          Reset it
+        </Link>
+      </p>
     </div>
   );
 };

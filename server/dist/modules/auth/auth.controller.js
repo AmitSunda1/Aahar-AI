@@ -3,8 +3,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.changePassword = exports.getMe = exports.logout = exports.refresh = exports.login = exports.resendOtp = exports.verifyOtp = exports.signup = void 0;
+exports.changePassword = exports.getMe = exports.resetPassword = exports.forgotPassword = exports.logout = exports.refresh = exports.login = exports.resendOtp = exports.verifyOtp = exports.signup = void 0;
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
+const crypto_1 = __importDefault(require("crypto"));
 const user_model_1 = __importDefault(require("../user/user.model"));
 const appError_1 = __importDefault(require("../../utils/appError"));
 const asyncHandler_1 = __importDefault(require("../../utils/asyncHandler"));
@@ -13,6 +14,7 @@ const cookie_1 = require("../../utils/cookie");
 const otp_1 = require("../../utils/otp");
 const email_service_1 = require("../../services/email/email.service");
 const auth_validator_1 = require("../../validators/auth.validator");
+const env_config_1 = require("../../config/env.config");
 const createSendToken = (user, statusCode, res, message) => {
     const accessToken = (0, jwt_1.signAccessToken)(user._id);
     const refreshToken = (0, jwt_1.signRefreshToken)(user._id);
@@ -195,6 +197,64 @@ exports.logout = (0, asyncHandler_1.default)(async (req, res, next) => {
         success: true,
         message: "Successfully logged out",
     });
+});
+// ─────────────────────────────────────────────
+// FORGOT PASSWORD
+// ─────────────────────────────────────────────
+exports.forgotPassword = (0, asyncHandler_1.default)(async (req, res, next) => {
+    const parsed = auth_validator_1.forgotPasswordValidator.safeParse(req.body);
+    if (!parsed.success) {
+        return next(new appError_1.default(parsed.error.issues[0].message, 400, "VALIDATION_ERROR"));
+    }
+    const { email } = parsed.data;
+    const user = await user_model_1.default.findOne({ email }).select("+isEmailVerified");
+    if (!user) {
+        return next(new appError_1.default("No account found with this email", 404));
+    }
+    if (!user.isEmailVerified) {
+        return next(new appError_1.default("Please verify your email before requesting a password reset.", 403, "EMAIL_NOT_VERIFIED"));
+    }
+    const resetToken = crypto_1.default.randomBytes(32).toString("hex");
+    const hashedResetToken = crypto_1.default
+        .createHash("sha256")
+        .update(resetToken)
+        .digest("hex");
+    user.passwordResetToken = hashedResetToken;
+    user.passwordResetExpires = new Date(Date.now() + 15 * 60 * 1000);
+    await user.save();
+    const resetLink = `${env_config_1.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
+    await (0, email_service_1.sendResetPasswordEmail)(user.email, resetLink);
+    res.status(200).json({
+        success: true,
+        message: "Password reset link sent to your email",
+    });
+});
+// ─────────────────────────────────────────────
+// RESET PASSWORD
+// ─────────────────────────────────────────────
+exports.resetPassword = (0, asyncHandler_1.default)(async (req, res, next) => {
+    const parsed = auth_validator_1.resetPasswordValidator.safeParse(req.body);
+    if (!parsed.success) {
+        return next(new appError_1.default(parsed.error.issues[0].message, 400, "VALIDATION_ERROR"));
+    }
+    const { token, newPassword } = parsed.data;
+    const hashedResetToken = crypto_1.default
+        .createHash("sha256")
+        .update(token)
+        .digest("hex");
+    const user = await user_model_1.default.findOne({
+        passwordResetToken: hashedResetToken,
+        passwordResetExpires: { $gt: new Date() },
+    }).select("+password");
+    if (!user) {
+        return next(new appError_1.default("Reset link is invalid or has expired", 400));
+    }
+    const hashedPassword = await bcryptjs_1.default.hash(newPassword, 10);
+    user.password = hashedPassword;
+    user.passwordResetToken = undefined;
+    user.passwordResetExpires = undefined;
+    await user.save();
+    createSendToken(user, 200, res, "Password reset successful");
 });
 // ─────────────────────────────────────────────
 // GET ME
