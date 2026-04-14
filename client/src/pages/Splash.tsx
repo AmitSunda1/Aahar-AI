@@ -39,7 +39,7 @@ export const Splash = () => {
                         Continue with Email
                     </button>
 
-                    <button
+                    {/* <button
                         onClick={() => {
                             // Google OAuth placeholder
                             console.log("Google OAuth Placeholder");
@@ -47,7 +47,7 @@ export const Splash = () => {
                         className="w-full h-12 flex items-center justify-center bg-base-white rounded-full text-[14px] leading-[20px] font-medium text-base-black transition-opacity active:opacity-70 shadow-card"
                     >
                         Continue with Google
-                    </button>
+                    </button> */}
                 </div>
 
                 <p className="text-[11px] leading-[14px] text-grey-500 text-center mt-6">

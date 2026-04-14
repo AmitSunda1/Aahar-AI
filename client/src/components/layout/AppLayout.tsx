@@ -1,6 +1,5 @@
 import type { ReactNode } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
-import { InstallPrompt } from "../ui/InstallPrompt";
 
 interface TabItem {
   to: string;
@@ -192,9 +191,6 @@ export const AppLayout = () => {
       <main className="pb-[116px]">
         <Outlet />
       </main>
-
-      {/* PWA install banner */}
-      <InstallPrompt />
 
       <div className="fixed bottom-0 left-1/2 z-40 w-full max-w-[450px] -translate-x-1/2 px-4 pb-safe pb-3">
         <div className="relative">

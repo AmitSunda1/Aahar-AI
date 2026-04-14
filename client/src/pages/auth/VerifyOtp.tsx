@@ -111,7 +111,7 @@ export const VerifyOtp = () => {
         <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/50 to-black/10" />
       </div>
 
-      <div className="relative z-10 w-[90%] mx-auto mb-12 p-6 bg-base-black/80 backdrop-blur-md rounded-card border border-grey-700 shadow-card-lg">
+      <div className="relative z-10 mx-auto mb-12 w-[92%] max-w-md rounded-card border border-grey-700 bg-base-black/80 p-4 shadow-card-lg backdrop-blur-md sm:p-6">
         <button
           onClick={() => navigate(-1)}
           className="inline-flex items-center text-grey-300 text-[13px] mb-6 hover:text-base-white transition-colors gap-1"
@@ -132,7 +132,7 @@ export const VerifyOtp = () => {
           </div>
         )}
 
-        <div className="flex gap-2 justify-between mb-8" onPaste={handlePaste}>
+        <div className="mb-8 grid grid-cols-6 gap-2" onPaste={handlePaste}>
           {otp.map((digit, i) => (
             <input
               key={i}
@@ -145,7 +145,7 @@ export const VerifyOtp = () => {
               value={digit}
               onChange={(e) => handleOtpChange(i, e.target.value)}
               onKeyDown={(e) => handleKeyDown(i, e)}
-              className="w-12 h-14 text-center text-[20px] font-semibold bg-base-black/50 border border-grey-700 rounded-input text-base-white focus:ring-1 focus:ring-accent-primary focus:border-accent-primary outline-none transition-colors"
+              className="h-12 min-w-0 w-full rounded-input border border-grey-700 bg-base-black/50 text-center text-[18px] font-semibold text-base-white outline-none transition-colors focus:border-accent-primary focus:ring-1 focus:ring-accent-primary sm:h-14 sm:text-[20px]"
             />
           ))}
         </div>

@@ -199,7 +199,8 @@ export const Profile = () => {
         goal: form.goal,
         activityLevel: form.activityLevel,
         dailySteps: Number(form.dailySteps),
-        dietaryPreferences: form.dietaryPreferences as import("../../features/onboarding/onboarding.types").DietaryPreference[],
+        dietaryPreferences:
+          form.dietaryPreferences as import("../../features/onboarding/onboarding.types").DietaryPreference[],
         medicalConditions: form.medicalConditionsRaw
           .split(",")
           .map((item) => item.trim())
@@ -242,8 +243,8 @@ export const Profile = () => {
 
       {/* User Profile Card */}
       <section className="mb-8 rounded-[28px] border border-grey-700/50 bg-[radial-gradient(circle_at_top_left,rgba(11,95,255,0.22),rgba(9,9,13,0.2)_38%,rgba(9,9,13,0.9)_100%)] p-6 shadow-card-lg">
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex min-w-0 items-center gap-4">
             {/* Avatar */}
             <div className="flex h-20 w-20 items-center justify-center rounded-full bg-accent-primary/20 border border-accent-primary/40">
               <span className="text-[32px] font-semibold text-accent-primary">
@@ -252,9 +253,11 @@ export const Profile = () => {
             </div>
 
             {/* User Info */}
-            <div>
+            <div className="min-w-0">
               <h2 className="text-h2">{user?.name || "User"}</h2>
-              <p className="mt-1 text-body text-grey-400">{user?.email}</p>
+              <p className="mt-1 truncate text-body text-grey-400">
+                {user?.email}
+              </p>
               <p className="mt-2 inline-flex rounded-full border border-accent-primary/30 bg-accent-primary/10 px-3 py-1 text-label-sm text-accent-primary">
                 {user?.isEmailVerified ? "✓ Verified" : "Pending verification"}
               </p>
@@ -264,7 +267,7 @@ export const Profile = () => {
           <button
             onClick={handleLogout}
             disabled={isLoggingOut}
-            className="h-12 px-5 rounded-full border border-semantic-error/40 bg-semantic-error/10 text-semantic-error font-semibold hover:bg-semantic-error/20 transition-colors disabled:opacity-50"
+            className="h-12 w-full shrink-0 rounded-full border border-semantic-error/40 bg-semantic-error/10 px-5 font-semibold text-semantic-error transition-colors hover:bg-semantic-error/20 disabled:opacity-50 sm:w-auto"
           >
             {isLoggingOut ? "..." : "Logout"}
           </button>

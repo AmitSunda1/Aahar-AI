@@ -149,6 +149,7 @@ export const FoodEntryFlow = () => {
   const keepVoiceAliveRef = useRef(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraVideoRef = useRef<HTMLVideoElement>(null);
+  const scannerGuideRef = useRef<HTMLDivElement>(null);
   const cameraStreamRef = useRef<MediaStream | null>(null);
   const hasAutoOpenedCaptureRef = useRef(false);
   const hasHydratedPendingCaptureRef = useRef(false);
@@ -539,7 +540,6 @@ export const FoodEntryFlow = () => {
       const response = await analyzeFoodImage(requestBody).unwrap();
       setAnalysis(response.data);
       setCaptureStep("results");
-      navigate("/dashboard");
     } catch (err) {
       const responseError = err as {
         status?: number;
@@ -588,6 +588,7 @@ export const FoodEntryFlow = () => {
       setImage(null);
       setImagePreview("");
       setCaptureStep("upload");
+      navigate("/dashboard");
     } catch (err) {
       const message =
         (err as { data?: { message?: string } })?.data?.message ||
@@ -668,8 +669,47 @@ export const FoodEntryFlow = () => {
     }
 
     const canvas = document.createElement("canvas");
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
+    const videoRect = video.getBoundingClientRect();
+    const guideRect = scannerGuideRef.current?.getBoundingClientRect();
+
+    let sourceX = 0;
+    let sourceY = 0;
+    let sourceWidth = video.videoWidth;
+    let sourceHeight = video.videoHeight;
+
+    // In fullscreen scanner mode, capture only what is inside the rounded guide.
+    if (
+      isScannerRoute &&
+      guideRect &&
+      videoRect.width > 0 &&
+      videoRect.height > 0
+    ) {
+      const displayedVideoScale = Math.max(
+        videoRect.width / video.videoWidth,
+        videoRect.height / video.videoHeight,
+      );
+
+      const renderedVideoWidth = video.videoWidth * displayedVideoScale;
+      const renderedVideoHeight = video.videoHeight * displayedVideoScale;
+      const overflowX = (renderedVideoWidth - videoRect.width) / 2;
+      const overflowY = (renderedVideoHeight - videoRect.height) / 2;
+
+      const guideXInVideoElement = guideRect.left - videoRect.left;
+      const guideYInVideoElement = guideRect.top - videoRect.top;
+
+      const mappedX = (guideXInVideoElement + overflowX) / displayedVideoScale;
+      const mappedY = (guideYInVideoElement + overflowY) / displayedVideoScale;
+      const mappedWidth = guideRect.width / displayedVideoScale;
+      const mappedHeight = guideRect.height / displayedVideoScale;
+
+      sourceX = Math.max(0, mappedX);
+      sourceY = Math.max(0, mappedY);
+      sourceWidth = Math.min(video.videoWidth - sourceX, mappedWidth);
+      sourceHeight = Math.min(video.videoHeight - sourceY, mappedHeight);
+    }
+
+    canvas.width = Math.max(1, Math.round(sourceWidth));
+    canvas.height = Math.max(1, Math.round(sourceHeight));
 
     const context = canvas.getContext("2d");
     if (!context) {
@@ -677,7 +717,17 @@ export const FoodEntryFlow = () => {
       return;
     }
 
-    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    context.drawImage(
+      video,
+      sourceX,
+      sourceY,
+      sourceWidth,
+      sourceHeight,
+      0,
+      0,
+      canvas.width,
+      canvas.height,
+    );
 
     const blob = await new Promise<Blob | null>((resolve) => {
       canvas.toBlob((result) => resolve(result), "image/jpeg", 0.92);
@@ -1235,7 +1285,10 @@ export const FoodEntryFlow = () => {
             </div>
 
             <div className="mx-auto mt-8 w-full max-w-[360px] rounded-[28px] border-2 border-white/55 p-1 shadow-[0_0_0_2000px_rgba(0,0,0,0.28)]">
-              <div className="h-[44vh] rounded-[24px] border border-white/25" />
+              <div
+                ref={scannerGuideRef}
+                className="h-[44vh] rounded-[24px] border border-white/25"
+              />
             </div>
 
             <p className="mt-6 text-center text-body text-grey-300">

@@ -13,11 +13,13 @@ import { LogFood } from "./pages/LogFood";
 import { Workout } from "./pages/Workout";
 import { Profile } from "./pages/Profile";
 import { ScanFood } from "./pages/ScanFood";
+import { InstallPrompt } from "./components/ui/InstallPrompt";
 
 function App() {
   return (
     <Provider store={store}>
       <BrowserRouter>
+        <InstallPrompt />
         <Routes>
           {/* Public Routes */}
           <Route path="/" element={<Splash />} />
