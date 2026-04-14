@@ -1,6 +1,7 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { env } from "../../config/env.config";
 import AppError from "../../utils/appError";
+import { rateLimitManager } from "./rateLimitManager";
 import {
   geminiMealPlanValidator,
   geminiPlanResponseValidator,
@@ -86,28 +87,35 @@ export const generateMealPlanWithGemini = async (
   const model = client.getGenerativeModel({ model: env.GEMINI_MODEL });
 
   try {
-    const result = await model.generateContent({
-      contents: [{ role: "user", parts: [{ text: prompt }] }],
-      generationConfig: {
-        temperature: 0.5,
-        responseMimeType: "application/json",
-      },
-    });
+    const executeGeneration = async () => {
+      const result = await model.generateContent({
+        contents: [{ role: "user", parts: [{ text: prompt }] }],
+        generationConfig: {
+          temperature: 0.5,
+          responseMimeType: "application/json",
+        },
+      });
 
-    const rawResponse = result.response.text();
-    const parsed = JSON.parse(stripJsonFence(rawResponse));
-    const validated = geminiMealPlanValidator.safeParse(parsed);
+      const rawResponse = result.response.text();
+      const parsed = JSON.parse(stripJsonFence(rawResponse));
+      const validated = geminiMealPlanValidator.safeParse(parsed);
 
-    if (!validated.success) {
-      throw new AppError(
-        validated.error.issues[0]?.message ||
-          "Invalid Gemini meal plan response",
-        502,
-        "INVALID_GEMINI_RESPONSE",
-      );
-    }
+      if (!validated.success) {
+        throw new AppError(
+          validated.error.issues[0]?.message ||
+            "Invalid Gemini meal plan response",
+          502,
+          "INVALID_GEMINI_RESPONSE",
+        );
+      }
 
-    return { plan: validated.data, rawResponse };
+      return { plan: validated.data, rawResponse };
+    };
+
+    return await rateLimitManager.executeWithRetry(
+      executeGeneration,
+      "Gemini weekly meal plan generation",
+    );
   } catch (error) {
     if (error instanceof AppError) throw error;
 
@@ -116,7 +124,15 @@ export const generateMealPlanWithGemini = async (
         ? error.message
         : "Gemini meal plan request failed";
 
-    if (message.includes("429") || message.toLowerCase().includes("quota")) {
+    if (
+      message.includes("429") ||
+      message.toLowerCase().includes("quota") ||
+      message.includes("RESOURCE_EXHAUSTED") ||
+      message.toLowerCase().includes("resource exhausted") ||
+      message.toLowerCase().includes("rate limit") ||
+      message.toLowerCase().includes("overloaded") ||
+      message.toLowerCase().includes("busy")
+    ) {
       throw new AppError(message, 429, "GEMINI_QUOTA_EXCEEDED");
     }
 

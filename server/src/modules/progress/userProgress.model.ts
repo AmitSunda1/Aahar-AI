@@ -11,6 +11,7 @@ import type {
   NutritionTarget,
   PlanRecommendations,
   PlanSource,
+  WorkoutSession,
   UserDailyProgress,
   UserPlan,
   WeightTarget,
@@ -24,6 +25,7 @@ export type {
   NutritionTarget,
   PlanRecommendations,
   PlanSource,
+  WorkoutSession,
   UserDailyProgress,
   UserPlan,
   WeightTarget,
@@ -34,6 +36,7 @@ export interface IUserProgress extends Document {
   activePlan?: UserPlan;
   planHistory: UserPlan[];
   dailyProgress: UserDailyProgress[];
+  workoutSessions: WorkoutSession[];
   lastPlanGeneratedAt?: Date;
   lastProgressUpdatedAt?: Date;
   createdAt: Date;
@@ -166,6 +169,23 @@ const userDailyProgressSchema = new Schema<UserDailyProgress>(
   { _id: false },
 );
 
+const workoutSessionSchema = new Schema<WorkoutSession>(
+  {
+    date: { type: Date, required: true },
+    dateKey: { type: String, required: true, trim: true },
+    dayNumber: { type: Number, required: true, min: 1, max: 7 },
+    dayLabel: { type: String, required: true, trim: true },
+    workoutTitle: { type: String, required: true, trim: true },
+    plannedMinutes: { type: Number, required: true, min: 0 },
+    actualMinutes: { type: Number, required: true, min: 0 },
+    caloriesBurned: { type: Number, required: true, min: 0 },
+    startedAt: { type: Date, required: true },
+    completedAt: { type: Date, required: true },
+    notes: { type: [String], default: [] },
+  },
+  { _id: false },
+);
+
 const userProgressSchema = new Schema<IUserProgress>(
   {
     user: {
@@ -178,6 +198,7 @@ const userProgressSchema = new Schema<IUserProgress>(
     activePlan: { type: userPlanSchema },
     planHistory: { type: [userPlanSchema], default: [] },
     dailyProgress: { type: [userDailyProgressSchema], default: [] },
+    workoutSessions: { type: [workoutSessionSchema], default: [] },
     lastPlanGeneratedAt: { type: Date },
     lastProgressUpdatedAt: { type: Date },
   },

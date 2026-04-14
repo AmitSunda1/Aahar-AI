@@ -1,24 +1,11 @@
 import { useState, useRef } from "react";
-import { useUpdateTodayProgressMutation } from "../../features/dashboard/dashboardApi";
+import {
+  useAnalyzeFoodImageMutation,
+  useLogFoodMutation,
+} from "../../features/food/foodApi";
 import { Loader } from "../../components/ui/Loader";
 import { compressImage } from "../../utils/imageCompression";
-
-interface AnalysisResult {
-  foodName: string;
-  description: string;
-  macros: {
-    calories: number;
-    protein: number;
-    carbs: number;
-    fat: number;
-    fiber?: number;
-    sugar?: number;
-  };
-  confidence: "high" | "medium" | "low";
-  servingSize?: string;
-  additionalInfo?: string;
-  dietaryTags?: string[];
-}
+import type { FoodAnalysisResult } from "../../features/food/foodApi";
 
 type UploadStep = "upload" | "describe" | "analyzing" | "results";
 
@@ -30,7 +17,7 @@ export const ScanFood = () => {
   const [quantity, setQuantity] = useState<number | "">("");
   const [unit, setUnit] = useState<"g" | "ml" | "pc" | "cup" | "tbsp" | "oz" | "l">("g");
   const [notes, setNotes] = useState("");
-  const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
+  const [analysis, setAnalysis] = useState<FoodAnalysisResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isLogging, setIsLogging] = useState(false);
@@ -38,7 +25,8 @@ export const ScanFood = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
 
-  const [updateTodayProgress] = useUpdateTodayProgressMutation();
+  const [analyzeFoodImage] = useAnalyzeFoodImageMutation();
+  const [logFood] = useLogFoodMutation();
 
   const handleImageSelect = (file: File | null) => {
     if (!file) return;
@@ -102,51 +90,32 @@ export const ScanFood = () => {
       const mimeType = image.type || "image/jpeg";
 
       try {
-        const apiUrl =
-          import.meta.env.VITE_API_URL || "http://localhost:8000/api/v1";
-        const response = await fetch(`${apiUrl}/food/analyze`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify({
-            image: base64Data,
-            mimeType,
-            description: description.trim(),
-            quantity: quantity ? Number(quantity) : undefined,
-            unit: quantity ? unit : undefined,
-            notes: notes.trim() || undefined,
-          }),
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          const errorMessage =
-            errorData.message || "Failed to analyze food image";
-
-          // Check if it's a rate limit error
-          if (response.status === 429) {
-            setError(
-              `AI system is busy: ${errorMessage}. Please wait a moment and try again.`,
-            );
-            // Start countdown timer
-            startRetryCountdown();
-          } else {
-            setError(errorMessage);
-          }
-
-          setUploadStep("describe");
-          return;
-        }
-
-        const data = await response.json();
+        const data = await analyzeFoodImage({
+          image: base64Data,
+          mimeType,
+          description: description.trim(),
+          quantity: quantity ? Number(quantity) : undefined,
+          unit: quantity ? unit : undefined,
+          notes: notes.trim() || undefined,
+        }).unwrap();
         setAnalysis(data.data);
         setUploadStep("results");
       } catch (err) {
+        const responseError = err as {
+          status?: number;
+          data?: { message?: string };
+        };
         const message =
-          err instanceof Error ? err.message : "Failed to analyze image";
-        setError(message);
+          responseError.data?.message ||
+          (err instanceof Error ? err.message : "Failed to analyze image");
+        if (responseError.status === 429) {
+          setError(
+            `AI system is busy: ${message}. Please wait a moment and try again.`,
+          );
+          startRetryCountdown();
+        } else {
+          setError(message);
+        }
         setUploadStep("describe");
       } finally {
         setIsAnalyzing(false);
@@ -182,13 +151,9 @@ export const ScanFood = () => {
     setError(null);
 
     try {
-      // Log to daily progress
-      await updateTodayProgress({
-        caloriesConsumed: analysis.macros.calories,
-        proteinConsumed: analysis.macros.protein,
-        carbsConsumed: analysis.macros.carbs,
-        fatConsumed: analysis.macros.fat,
-        notes: [`Added: ${analysis.foodName}`],
+      await logFood({
+        foodName: analysis.foodName,
+        macros: analysis.macros,
       }).unwrap();
 
       // Reset form and show success

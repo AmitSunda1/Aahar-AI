@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.logFoodHandler = exports.analyzeFoodHandler = void 0;
+exports.logFoodHandler = exports.analyzeFoodTextHandler = exports.analyzeFoodHandler = void 0;
 const asyncHandler_1 = __importDefault(require("../../utils/asyncHandler"));
 const appError_1 = __importDefault(require("../../utils/appError"));
 const user_model_1 = __importDefault(require("../user/user.model"));
@@ -63,6 +63,47 @@ exports.analyzeFoodHandler = (0, asyncHandler_1.default)(async (req, res, next) 
             return next(error);
         }
         return next(new appError_1.default("Failed to analyze food image", 500, "ANALYSIS_FAILED"));
+    }
+});
+/**
+ * POST /food/describe
+ * Analyze a typed or transcribed food description without an image
+ * Body: { description: string, quantity?: number, unit?: string, notes?: string }
+ */
+exports.analyzeFoodTextHandler = (0, asyncHandler_1.default)(async (req, res, next) => {
+    const userId = String(req.user._id);
+    const user = await user_model_1.default.findById(userId);
+    if (!user)
+        return next(new appError_1.default("User not found", 404));
+    if (!user.isCompletedOnboarding) {
+        return next(new appError_1.default("Complete onboarding first", 400));
+    }
+    const { description, quantity, unit, notes } = req.body;
+    const validationResult = foodAnalysis_validator_1.analyzeFoodRequestValidator.safeParse({
+        description,
+        quantity,
+        unit,
+        notes,
+    });
+    if (!validationResult.success) {
+        return next(new appError_1.default(validationResult.error.issues[0]?.message || "Invalid request data", 400));
+    }
+    try {
+        const analysis = await (0, foodAnalysis_service_1.analyzeFoodText)(validationResult.data);
+        res.status(200).json({
+            success: true,
+            message: "Food description analyzed successfully",
+            data: analysis,
+        });
+    }
+    catch (error) {
+        if (error instanceof appError_1.default) {
+            if (error.code === "GEMINI_QUOTA_EXCEEDED") {
+                return next(new appError_1.default(error.message + " Please wait a moment and try again.", error.statusCode, error.code));
+            }
+            return next(error);
+        }
+        return next(new appError_1.default("Failed to analyze food description", 500, "ANALYSIS_FAILED"));
     }
 });
 /**

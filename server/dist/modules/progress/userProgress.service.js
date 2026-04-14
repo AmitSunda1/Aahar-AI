@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getUserProgress = exports.upsertDailyProgress = exports.saveGeneratedPlan = void 0;
+exports.logWorkoutSession = exports.getUserProgress = exports.upsertDailyProgress = exports.saveGeneratedPlan = void 0;
 const userProgress_model_1 = __importDefault(require("./userProgress.model"));
 const toDateKey = (date) => date.toISOString().slice(0, 10);
 const calculateAdherenceScore = (targets, actuals) => {
@@ -54,6 +54,7 @@ const saveGeneratedPlan = async (userId, plan) => {
             user: userId,
             planHistory: [],
             dailyProgress: [],
+            workoutSessions: [],
         });
     if (progress.activePlan) {
         progress.planHistory.push(progress.activePlan);
@@ -69,6 +70,8 @@ const upsertDailyProgress = async (userId, date, actualsPatch, notes) => {
     if (!progress?.activePlan) {
         throw new Error("No active plan found for user progress");
     }
+    const workoutSessions = progress.workoutSessions ?? [];
+    progress.workoutSessions = workoutSessions;
     const dateKey = toDateKey(date);
     const targets = {
         nutrition: progress.activePlan.nutrition,
@@ -88,10 +91,28 @@ const upsertDailyProgress = async (userId, date, actualsPatch, notes) => {
     const previousActuals = existingIndex >= 0
         ? progress.dailyProgress[existingIndex].actuals
         : defaults;
+    // Accumulate numeric values instead of overwriting them
     const mergedActuals = {
         ...defaults,
         ...previousActuals,
-        ...actualsPatch,
+        caloriesConsumed: (previousActuals.caloriesConsumed ?? 0) +
+            (actualsPatch.caloriesConsumed ?? 0),
+        carbsConsumed: (previousActuals.carbsConsumed ?? 0) + (actualsPatch.carbsConsumed ?? 0),
+        proteinConsumed: (previousActuals.proteinConsumed ?? 0) +
+            (actualsPatch.proteinConsumed ?? 0),
+        fatConsumed: (previousActuals.fatConsumed ?? 0) + (actualsPatch.fatConsumed ?? 0),
+        waterMlConsumed: (previousActuals.waterMlConsumed ?? 0) +
+            (actualsPatch.waterMlConsumed ?? 0),
+        stepsCompleted: (previousActuals.stepsCompleted ?? 0) +
+            (actualsPatch.stepsCompleted ?? 0),
+        exerciseMinutesCompleted: (previousActuals.exerciseMinutesCompleted ?? 0) +
+            (actualsPatch.exerciseMinutesCompleted ?? 0),
+        caloriesBurned: (previousActuals.caloriesBurned ?? 0) +
+            (actualsPatch.caloriesBurned ?? 0),
+        // Weight should be overwritten with the latest logged value, not accumulated.
+        weightKg: typeof actualsPatch.weightKg === "number"
+            ? actualsPatch.weightKg
+            : previousActuals.weightKg,
     };
     const adherenceScore = calculateAdherenceScore(targets, mergedActuals);
     const status = deriveStatus(adherenceScore, mergedActuals);
@@ -120,3 +141,42 @@ const getUserProgress = async (userId) => {
     return userProgress_model_1.default.findOne({ user: userId });
 };
 exports.getUserProgress = getUserProgress;
+const logWorkoutSession = async (userId, input) => {
+    const progress = await userProgress_model_1.default.findOne({ user: userId });
+    if (!progress?.activePlan) {
+        throw new Error("No active plan found for user progress");
+    }
+    const date = input.completedAt;
+    const dateKey = toDateKey(date);
+    const nextSession = {
+        date,
+        dateKey,
+        dayNumber: input.dayNumber,
+        dayLabel: input.dayLabel,
+        workoutTitle: input.workoutTitle,
+        plannedMinutes: input.plannedMinutes,
+        actualMinutes: input.actualMinutes,
+        caloriesBurned: input.caloriesBurned,
+        startedAt: input.startedAt,
+        completedAt: input.completedAt,
+        notes: input.notes,
+    };
+    const existingIndex = progress.workoutSessions.findIndex((session) => session.dateKey === dateKey && session.dayNumber === input.dayNumber);
+    if (existingIndex >= 0) {
+        progress.workoutSessions[existingIndex] = nextSession;
+    }
+    else {
+        progress.workoutSessions.push(nextSession);
+    }
+    await progress.save();
+    await (0, exports.upsertDailyProgress)(userId, date, {
+        exerciseMinutesCompleted: input.actualMinutes,
+        caloriesBurned: input.caloriesBurned,
+    }, input.notes);
+    const refreshed = await userProgress_model_1.default.findOne({ user: userId });
+    return {
+        session: nextSession,
+        progress: refreshed,
+    };
+};
+exports.logWorkoutSession = logWorkoutSession;

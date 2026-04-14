@@ -309,3 +309,48 @@ export const getMe = asyncHandler(
     });
   },
 );
+
+// CHANGE PASSWORD
+// ─────────────────────────────────────────────
+export const changePassword = asyncHandler(
+  async (req: Request, res: Response, next: any) => {
+    const userId = String(req.user!._id);
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      return next(
+        new AppError("currentPassword and newPassword are required", 400),
+      );
+    }
+
+    if (newPassword.length < 6) {
+      return next(
+        new AppError("New password must be at least 6 characters", 400),
+      );
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return next(new AppError("User not found", 404));
+    }
+
+    // Verify current password
+    const isPasswordValid = await bcrypt.compare(
+      currentPassword,
+      user.password || "",
+    );
+    if (!isPasswordValid) {
+      return next(new AppError("Current password is incorrect", 401));
+    }
+
+    // Hash and update password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    user.password = hashedPassword;
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Password changed successfully",
+    });
+  },
+);

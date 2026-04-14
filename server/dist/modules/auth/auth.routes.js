@@ -14,4 +14,5 @@ router.post("/resend-otp", auth_controller_1.resendOtp);
 router.post("/refresh", auth_controller_1.refresh);
 router.post("/logout", auth_controller_1.logout);
 router.get("/me", auth_middleware_1.authenticate, auth_controller_1.getMe);
+router.post("/change-password", auth_middleware_1.authenticate, auth_controller_1.changePassword);
 exports.default = router;

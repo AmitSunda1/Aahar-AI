@@ -100,7 +100,7 @@ export const DashboardTestingPanel = ({
             min="0"
             value={form.carbsConsumed}
             onChange={(event) => setField("carbsConsumed", event.target.value)}
-            placeholder="Carbs g"
+            placeholder="Carbs (g)"
           />
           <TextInput
             type="number"
@@ -109,14 +109,14 @@ export const DashboardTestingPanel = ({
             onChange={(event) =>
               setField("proteinConsumed", event.target.value)
             }
-            placeholder="Protein g"
+            placeholder="Protein (g)"
           />
           <TextInput
             type="number"
             min="0"
             value={form.fatConsumed}
             onChange={(event) => setField("fatConsumed", event.target.value)}
-            placeholder="Fat g"
+            placeholder="Fat (g)"
           />
           <TextInput
             type="number"
@@ -140,7 +140,7 @@ export const DashboardTestingPanel = ({
             step="0.1"
             value={form.weightKg}
             onChange={(event) => setField("weightKg", event.target.value)}
-            placeholder="Weight kg"
+            placeholder="Weight (kg)"
           />
         </div>
 

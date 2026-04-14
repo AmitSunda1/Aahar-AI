@@ -7,6 +7,7 @@ import {
   getMe,
   verifyOtp,
   resendOtp,
+  changePassword,
 } from "./auth.controller";
 import { authenticate } from "../../middlewares/auth.middleware";
 
@@ -19,5 +20,6 @@ router.post("/resend-otp", resendOtp);
 router.post("/refresh", refresh);
 router.post("/logout", logout);
 router.get("/me", authenticate, getMe);
+router.post("/change-password", authenticate, changePassword);
 
 export default router;

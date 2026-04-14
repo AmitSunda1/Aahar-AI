@@ -32,9 +32,15 @@ class RateLimitManager {
                 const err = error;
                 lastError = error instanceof Error ? error : new Error(String(error));
                 // Check if it's a rate limit error
-                const isRateLimitError = err.message?.includes("429") ||
-                    err.message?.includes("quota") ||
-                    err.message?.includes("Too Many Requests");
+                const message = String(err.message || "");
+                const isRateLimitError = message.includes("429") ||
+                    message.includes("quota") ||
+                    message.includes("Too Many Requests") ||
+                    message.includes("RESOURCE_EXHAUSTED") ||
+                    message.toLowerCase().includes("resource exhausted") ||
+                    message.toLowerCase().includes("rate limit") ||
+                    message.toLowerCase().includes("overloaded") ||
+                    message.toLowerCase().includes("busy");
                 if (!isRateLimitError) {
                     // Not a rate limit error, throw immediately
                     throw lastError;

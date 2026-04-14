@@ -23,6 +23,18 @@ export const updateTodayProgressValidator = z
     message: "At least one progress field is required",
   });
 
+export const workoutSessionValidator = z.object({
+  dayNumber: z.number().int().min(1).max(7),
+  dayLabel: z.string().trim().min(2),
+  workoutTitle: z.string().trim().min(3),
+  plannedMinutes: z.number().min(0),
+  actualMinutes: z.number().min(0),
+  caloriesBurned: z.number().min(0),
+  startedAt: z.string().datetime().optional(),
+  completedAt: z.string().datetime().optional(),
+  notes: z.array(z.string().trim().min(1)).max(10).optional(),
+});
+
 // Legacy — kept for backward-compat with generatePlanWithGemini
 export const geminiPlanResponseValidator = z.object({
   summary: z.string().trim().min(20).max(280),
@@ -90,5 +102,6 @@ export type GeneratePlanInput = z.infer<typeof generatePlanValidator>;
 export type UpdateTodayProgressInput = z.infer<
   typeof updateTodayProgressValidator
 >;
+export type WorkoutSessionInput = z.infer<typeof workoutSessionValidator>;
 export type GeminiPlanResponse = z.infer<typeof geminiPlanResponseValidator>;
 export type GeminiMealPlanResponse = z.infer<typeof geminiMealPlanValidator>;

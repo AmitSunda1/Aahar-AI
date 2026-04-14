@@ -230,32 +230,20 @@ const mapGeminiMealPlanToUserPlan = (geminiPlan, profilePlan, promptContext, raw
 };
 exports.mapGeminiMealPlanToUserPlan = mapGeminiMealPlanToUserPlan;
 // ─── Weight trend ─────────────────────────────────────────────────────────────
-const buildMockWeightTrend = (currentWeightKg) => [
-    { label: "M", value: Number((currentWeightKg + 0.7).toFixed(1)) },
-    { label: "T", value: Number((currentWeightKg + 0.5).toFixed(1)) },
-    { label: "W", value: Number((currentWeightKg + 0.3).toFixed(1)) },
-    { label: "T", value: Number((currentWeightKg + 0.2).toFixed(1)) },
-    { label: "F", value: Number((currentWeightKg + 0.25).toFixed(1)) },
-    { label: "S", value: Number((currentWeightKg + 0.1).toFixed(1)) },
-    { label: "Today", value: Number(currentWeightKg.toFixed(1)) },
-];
 const buildWeightTrend = (currentWeightKg, progress) => {
+    const todayKey = new Date().toISOString().slice(0, 10);
     const weightedDays = progress?.dailyProgress
         ?.filter((entry) => typeof entry.actuals.weightKg === "number")
+        .sort((a, b) => a.dateKey.localeCompare(b.dateKey))
         .slice(-7)
         .map((entry) => ({
-        label: entry.dateKey === new Date().toISOString().slice(0, 10)
-            ? "Today"
-            : entry.dateKey.slice(5),
+        label: entry.dateKey,
         value: Number(entry.actuals.weightKg?.toFixed(1)),
     })) ?? [];
-    if (weightedDays.length >= 3) {
-        return weightedDays.map((entry, index, all) => ({
-            label: index === all.length - 1 ? "Today" : entry.label,
-            value: entry.value,
-        }));
+    if (weightedDays.length > 0) {
+        return weightedDays;
     }
-    return buildMockWeightTrend(currentWeightKg);
+    return [{ label: todayKey, value: Number(currentWeightKg.toFixed(1)) }];
 };
 // ─── Insights ─────────────────────────────────────────────────────────────────
 const buildInsights = (plan, adherenceScore, stepCount) => {
@@ -291,14 +279,49 @@ const buildInsights = (plan, adherenceScore, stepCount) => {
     }
     return insights;
 };
+const buildRecommendationsFromMealPlan = (mealPlan) => {
+    return {
+        meals: mealPlan.days.map((day) => {
+            const lunch = day.meals.find((meal) => meal.mealType === "lunch");
+            const mealName = lunch?.options[0]?.name ?? `${day.dayLabel} meal plan`;
+            return `${day.dayLabel}: ${mealName}`;
+        }),
+        workouts: mealPlan.days.map((day) => `${day.dayLabel}: ${day.workoutNote}`),
+        habits: mealPlan.days.map((day) => `${day.dayLabel}: ${day.habitNote}`),
+    };
+};
 // ─── Main dashboard state builder ─────────────────────────────────────────────
-const buildDashboardFromState = (user, progress) => {
+const buildDashboardFromState = (user, progress, latestMealPlan) => {
     const nutritionProfile = (0, exports.computeUserNutritionProfile)(user);
     const { weightKg } = resolveUserInputs(user);
     const profilePlan = (0, exports.buildPlanFromProfile)(user);
     const activePlan = progress?.activePlan ?? profilePlan;
+    const mealPlanRecommendations = latestMealPlan
+        ? buildRecommendationsFromMealPlan(latestMealPlan.plan)
+        : activePlan.recommendations;
+    const normalizedMealPlanSource = latestMealPlan
+        ? latestMealPlan.generatedBy === "fallback"
+            ? "manual"
+            : latestMealPlan.generatedBy
+        : null;
+    const dashboardSource = normalizedMealPlanSource ?? activePlan.source;
+    const dashboardSummary = latestMealPlan?.plan.weekSummary ?? activePlan.summary;
+    const insightPlan = latestMealPlan
+        ? {
+            ...activePlan,
+            source: normalizedMealPlanSource ?? activePlan.source,
+            summary: latestMealPlan.plan.weekSummary,
+            recommendations: mealPlanRecommendations,
+        }
+        : activePlan;
     const todayKey = new Date().toISOString().slice(0, 10);
     const todayProgress = progress?.dailyProgress?.find((entry) => entry.dateKey === todayKey);
+    const sortedWeightEntries = progress?.dailyProgress
+        ?.filter((entry) => typeof entry.actuals.weightKg === "number")
+        .sort((a, b) => a.dateKey.localeCompare(b.dateKey)) ?? [];
+    const latestLoggedWeight = sortedWeightEntries.length > 0
+        ? sortedWeightEntries[sortedWeightEntries.length - 1].actuals.weightKg
+        : undefined;
     const actuals = todayProgress?.actuals ?? {
         caloriesConsumed: 0,
         carbsConsumed: 0,
@@ -310,7 +333,10 @@ const buildDashboardFromState = (user, progress) => {
         caloriesBurned: 0,
         weightKg,
     };
-    const currentWeightKg = Number((actuals.weightKg ?? activePlan.weight?.currentKg ?? weightKg).toFixed(1));
+    const currentWeightKg = Number((latestLoggedWeight ??
+        actuals.weightKg ??
+        activePlan.weight?.currentKg ??
+        weightKg).toFixed(1));
     // Calorie & macro targets are always from the authoritative calculator
     const { dailyCalorieTarget, macros: profileMacros } = nutritionProfile;
     const stepGoal = Math.max(6000, user.dailySteps ?? 9000);
@@ -336,16 +362,18 @@ const buildDashboardFromState = (user, progress) => {
         currentWeightKg,
         adherenceScore: todayProgress?.adherenceScore ?? 0,
         todayStatus: todayProgress?.status ?? "not_started",
-        planSummary: activePlan.summary,
-        recommendations: activePlan.recommendations,
-        insights: buildInsights(activePlan, todayProgress?.adherenceScore ?? 0, actuals.stepsCompleted),
-        source: activePlan.source,
+        planSummary: dashboardSummary,
+        recommendations: mealPlanRecommendations,
+        insights: buildInsights(insightPlan, todayProgress?.adherenceScore ?? 0, actuals.stepsCompleted),
+        source: dashboardSource,
+        weeklyMealPlan: latestMealPlan?.plan ?? null,
         nutritionSnapshot: {
             bmr: nutritionProfile.bmr,
             maintenanceCalories: nutritionProfile.maintenanceCalories,
             waterMl: nutritionProfile.waterMl,
             fiberTargetG: nutritionProfile.microLimits.fiberTargetG,
         },
+        workoutSessions: progress?.workoutSessions ?? [],
     };
 };
 exports.buildDashboardFromState = buildDashboardFromState;

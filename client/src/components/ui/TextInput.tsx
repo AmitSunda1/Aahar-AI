@@ -12,6 +12,6 @@ interface TextInputProps extends InputHTMLAttributes<HTMLInputElement> {
 export const TextInput = ({ className = "", ...props }: TextInputProps) => (
   <input
     {...props}
-    className={`w-full h-14 px-4 bg-grey-900 rounded-card text-base-white placeholder-grey-500 text-body-lg outline-none focus:ring-2 focus:ring-accent-primary/50 transition-all ${className}`}
+    className={`w-full h-14 px-4 bg-grey-900 rounded-card text-base-white placeholder-grey-500 text-body-lg outline-none focus:ring-2 focus:ring-inset focus:ring-accent-primary/50 transition-all ${className}`}
   />
 );

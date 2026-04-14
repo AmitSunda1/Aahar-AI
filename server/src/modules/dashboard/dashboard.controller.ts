@@ -15,10 +15,12 @@ import {
 } from "./dashboard.service";
 import {
   generatePlanValidator,
+  workoutSessionValidator,
   updateTodayProgressValidator,
 } from "../../validators/dashboard.validator";
 import {
   getUserProgress,
+  logWorkoutSession,
   saveGeneratedPlan,
   upsertDailyProgress,
 } from "../progress/userProgress.service";
@@ -27,10 +29,11 @@ import {
   getLatestMealPlan,
   getTodayMealPlan,
   getWeeklyMealPlan,
-  isMealPlanRefreshDue,
   saveMealPlan,
 } from "../meal-plan/mealPlan.service";
 import type { IUser } from "../user/user.model";
+
+const FALLBACK_RETRY_MS = 20 * 1000;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -48,10 +51,21 @@ const getOnboardedUser = async (userId: string, next: any) => {
  */
 const ensureAndRefreshMealPlan = async (user: IUser) => {
   const userId = String(user._id);
-  const refreshDue = await isMealPlanRefreshDue(userId);
+  const latestMealPlan = await getLatestMealPlan(userId);
+  const refreshDue =
+    !latestMealPlan ||
+    Date.now() - latestMealPlan.createdAt.getTime() >= 7 * 24 * 60 * 60 * 1000;
+  const fallbackRetryDue =
+    latestMealPlan?.generatedBy === "fallback" &&
+    Date.now() - latestMealPlan.createdAt.getTime() >= FALLBACK_RETRY_MS;
 
-  if (!refreshDue) {
-    return { refreshed: false, reason: "not_due", source: "cached" as const };
+  if (!refreshDue && !fallbackRetryDue) {
+    return {
+      refreshed: false,
+      reason: "not_due" as const,
+      source: "cached" as const,
+      aiError: undefined,
+    };
   }
 
   const nutritionProfile = computeUserNutritionProfile(user);
@@ -73,9 +87,47 @@ const ensureAndRefreshMealPlan = async (user: IUser) => {
         rawGeminiResponse: rawResponse,
       });
 
-      return { refreshed: true, reason: "ok", source: "gemini" as const };
-    } catch {
-      // Fall through to deterministic fallback
+      return {
+        refreshed: true,
+        reason: "ok" as const,
+        source: "gemini" as const,
+        aiError: undefined,
+      };
+    } catch (error) {
+      const aiError =
+        error instanceof AppError
+          ? error.message
+          : error instanceof Error
+            ? error.message
+            : "Gemini meal plan generation failed";
+
+      const reason =
+        error instanceof AppError && error.code === "GEMINI_QUOTA_EXCEEDED"
+          ? "gemini_quota_exceeded"
+          : error instanceof AppError &&
+              error.code === "INVALID_GEMINI_RESPONSE"
+            ? "gemini_invalid_response"
+            : "gemini_error";
+
+      const fallbackPlan = buildFallbackWeeklyPlan(
+        nutritionProfile,
+        dietaryPreferences,
+        medicalConditions,
+      );
+
+      await saveMealPlan({
+        userId,
+        plan: fallbackPlan,
+        generatedBy: "fallback",
+        nutritionProfile,
+      });
+
+      return {
+        refreshed: true,
+        reason,
+        source: "fallback" as const,
+        aiError,
+      };
     }
   }
 
@@ -92,10 +144,12 @@ const ensureAndRefreshMealPlan = async (user: IUser) => {
     nutritionProfile,
   });
 
-  const reason = isGeminiConfigured()
-    ? "gemini_unavailable"
-    : "gemini_not_configured";
-  return { refreshed: true, reason, source: "fallback" as const };
+  return {
+    refreshed: true,
+    reason: "gemini_not_configured" as const,
+    source: "fallback" as const,
+    aiError: undefined,
+  };
 };
 
 const sendDashboardResponse = async (
@@ -113,7 +167,7 @@ const sendDashboardResponse = async (
 
   if (!user) throw new AppError("User not found", 404);
 
-  const dashboardData = buildDashboardFromState(user, progress);
+  const dashboardData = buildDashboardFromState(user, progress, latestPlan);
   const mealPlanSource: string = latestPlan?.generatedBy ?? "not_generated";
 
   res.status(200).json({
@@ -122,11 +176,14 @@ const sendDashboardResponse = async (
     data: {
       ...dashboardData,
       todayMealPlan: todayMealPlan ?? null,
+      weeklyMealPlan: latestPlan?.plan ?? null,
     },
     meta: {
       hasActivePlan: Boolean(progress?.activePlan),
       canUseGemini: isGeminiConfigured(),
-      lastPlanGeneratedAt: progress?.lastPlanGeneratedAt?.toISOString(),
+      lastPlanGeneratedAt:
+        latestPlan?.createdAt?.toISOString() ??
+        progress?.lastPlanGeneratedAt?.toISOString(),
       mealPlanSource,
       ...extraMeta,
     },
@@ -156,6 +213,7 @@ export const getHomeDashboard = asyncHandler(
       {
         aiWeeklyRefreshed: refresh.refreshed,
         aiSuggestionsStatus: refresh.reason,
+        aiError: refresh.aiError,
       },
     );
   },
@@ -281,6 +339,53 @@ export const updateTodayDashboardProgress = asyncHandler(
       res,
       "Today's progress updated successfully",
     );
+  },
+);
+
+export const completeWorkoutSession = asyncHandler(
+  async (req: Request, res: Response, next: any) => {
+    const user = await getOnboardedUser(String(req.user!._id), next);
+    if (!user) return;
+
+    const parsed = workoutSessionValidator.safeParse(req.body ?? {});
+    if (!parsed.success) {
+      return next(
+        new AppError(parsed.error.issues[0].message, 400, "VALIDATION_ERROR"),
+      );
+    }
+
+    const startedAt = parsed.data.startedAt
+      ? new Date(parsed.data.startedAt)
+      : new Date();
+    const completedAt = parsed.data.completedAt
+      ? new Date(parsed.data.completedAt)
+      : new Date();
+
+    try {
+      const result = await logWorkoutSession(String(user._id), {
+        dayNumber: parsed.data.dayNumber,
+        dayLabel: parsed.data.dayLabel,
+        workoutTitle: parsed.data.workoutTitle,
+        plannedMinutes: parsed.data.plannedMinutes,
+        actualMinutes: parsed.data.actualMinutes,
+        caloriesBurned: parsed.data.caloriesBurned,
+        startedAt,
+        completedAt,
+        notes: parsed.data.notes,
+      });
+
+      res.status(200).json({
+        success: true,
+        message: "Workout session saved successfully",
+        data: result.session,
+      });
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Failed to save workout session";
+      return next(new AppError(message, 400, "WORKOUT_SESSION_SAVE_FAILED"));
+    }
   },
 );
 

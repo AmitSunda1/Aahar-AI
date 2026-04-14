@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.geminiMealPlanValidator = exports.geminiPlanResponseValidator = exports.updateTodayProgressValidator = exports.generatePlanValidator = void 0;
+exports.geminiMealPlanValidator = exports.geminiPlanResponseValidator = exports.workoutSessionValidator = exports.updateTodayProgressValidator = exports.generatePlanValidator = void 0;
 const zod_1 = require("zod");
 // ─── Existing validators (unchanged) ────────────────────────────────────────
 exports.generatePlanValidator = zod_1.z.object({
@@ -21,6 +21,17 @@ exports.updateTodayProgressValidator = zod_1.z
 })
     .refine((value) => Object.keys(value).length > 0, {
     message: "At least one progress field is required",
+});
+exports.workoutSessionValidator = zod_1.z.object({
+    dayNumber: zod_1.z.number().int().min(1).max(7),
+    dayLabel: zod_1.z.string().trim().min(2),
+    workoutTitle: zod_1.z.string().trim().min(3),
+    plannedMinutes: zod_1.z.number().min(0),
+    actualMinutes: zod_1.z.number().min(0),
+    caloriesBurned: zod_1.z.number().min(0),
+    startedAt: zod_1.z.string().datetime().optional(),
+    completedAt: zod_1.z.string().datetime().optional(),
+    notes: zod_1.z.array(zod_1.z.string().trim().min(1)).max(10).optional(),
 });
 // Legacy — kept for backward-compat with generatePlanWithGemini
 exports.geminiPlanResponseValidator = zod_1.z.object({

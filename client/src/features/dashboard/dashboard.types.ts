@@ -95,6 +95,20 @@ export interface PlanRecommendations {
   habits: string[];
 }
 
+export interface WorkoutSession {
+  date: string;
+  dateKey: string;
+  dayNumber: number;
+  dayLabel: string;
+  workoutTitle: string;
+  plannedMinutes: number;
+  actualMinutes: number;
+  caloriesBurned: number;
+  startedAt: string;
+  completedAt: string;
+  notes?: string[];
+}
+
 export interface HomeDashboardData {
   greetingTitle: string;
   calorieGoal: number;
@@ -115,7 +129,9 @@ export interface HomeDashboardData {
   insights: DashboardInsight[];
   source: "mock" | "gemini" | "manual";
   todayMealPlan: PlanDay | null;
+  weeklyMealPlan: WeeklyMealPlan | null;
   nutritionSnapshot: DashboardNutritionSnapshot;
+  workoutSessions: WorkoutSession[];
 }
 
 export interface DashboardMeta {
@@ -127,7 +143,10 @@ export interface DashboardMeta {
     | "ok"
     | "not_due"
     | "gemini_not_configured"
-    | "gemini_unavailable";
+    | "gemini_unavailable"
+    | "gemini_quota_exceeded"
+    | "gemini_invalid_response"
+    | "gemini_error";
   aiError?: string;
   mealPlanSource?: "gemini" | "fallback" | "not_generated";
 }
@@ -149,5 +168,17 @@ export interface UpdateTodayProgressRequest {
   exerciseMinutesCompleted?: number;
   caloriesBurned?: number;
   weightKg?: number;
+  notes?: string[];
+}
+
+export interface CompleteWorkoutSessionRequest {
+  dayNumber: number;
+  dayLabel: string;
+  workoutTitle: string;
+  plannedMinutes: number;
+  actualMinutes: number;
+  caloriesBurned: number;
+  startedAt?: string;
+  completedAt?: string;
   notes?: string[];
 }

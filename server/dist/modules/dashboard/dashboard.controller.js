@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getWeeklyMealPlanHandler = exports.getTodayMealPlanHandler = exports.updateTodayDashboardProgress = exports.generateDashboardPlan = exports.getHomeDashboard = void 0;
+exports.getWeeklyMealPlanHandler = exports.getTodayMealPlanHandler = exports.completeWorkoutSession = exports.updateTodayDashboardProgress = exports.generateDashboardPlan = exports.getHomeDashboard = void 0;
 const appError_1 = __importDefault(require("../../utils/appError"));
 const asyncHandler_1 = __importDefault(require("../../utils/asyncHandler"));
 const user_model_1 = __importDefault(require("../user/user.model"));
@@ -12,6 +12,7 @@ const dashboard_service_1 = require("./dashboard.service");
 const dashboard_validator_1 = require("../../validators/dashboard.validator");
 const userProgress_service_1 = require("../progress/userProgress.service");
 const mealPlan_service_1 = require("../meal-plan/mealPlan.service");
+const FALLBACK_RETRY_MS = 20 * 1000;
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const getOnboardedUser = async (userId, next) => {
     const user = await user_model_1.default.findById(userId);
@@ -27,9 +28,18 @@ const getOnboardedUser = async (userId, next) => {
  */
 const ensureAndRefreshMealPlan = async (user) => {
     const userId = String(user._id);
-    const refreshDue = await (0, mealPlan_service_1.isMealPlanRefreshDue)(userId);
-    if (!refreshDue) {
-        return { refreshed: false, reason: "not_due", source: "cached" };
+    const latestMealPlan = await (0, mealPlan_service_1.getLatestMealPlan)(userId);
+    const refreshDue = !latestMealPlan ||
+        Date.now() - latestMealPlan.createdAt.getTime() >= 7 * 24 * 60 * 60 * 1000;
+    const fallbackRetryDue = latestMealPlan?.generatedBy === "fallback" &&
+        Date.now() - latestMealPlan.createdAt.getTime() >= FALLBACK_RETRY_MS;
+    if (!refreshDue && !fallbackRetryDue) {
+        return {
+            refreshed: false,
+            reason: "not_due",
+            source: "cached",
+            aiError: undefined,
+        };
     }
     const nutritionProfile = (0, dashboard_service_1.computeUserNutritionProfile)(user);
     const dietaryPreferences = user.dietaryPreferences ?? [];
@@ -46,10 +56,38 @@ const ensureAndRefreshMealPlan = async (user) => {
                 promptContext: prompt,
                 rawGeminiResponse: rawResponse,
             });
-            return { refreshed: true, reason: "ok", source: "gemini" };
+            return {
+                refreshed: true,
+                reason: "ok",
+                source: "gemini",
+                aiError: undefined,
+            };
         }
-        catch {
-            // Fall through to deterministic fallback
+        catch (error) {
+            const aiError = error instanceof appError_1.default
+                ? error.message
+                : error instanceof Error
+                    ? error.message
+                    : "Gemini meal plan generation failed";
+            const reason = error instanceof appError_1.default && error.code === "GEMINI_QUOTA_EXCEEDED"
+                ? "gemini_quota_exceeded"
+                : error instanceof appError_1.default &&
+                    error.code === "INVALID_GEMINI_RESPONSE"
+                    ? "gemini_invalid_response"
+                    : "gemini_error";
+            const fallbackPlan = (0, mealPlan_service_1.buildFallbackWeeklyPlan)(nutritionProfile, dietaryPreferences, medicalConditions);
+            await (0, mealPlan_service_1.saveMealPlan)({
+                userId,
+                plan: fallbackPlan,
+                generatedBy: "fallback",
+                nutritionProfile,
+            });
+            return {
+                refreshed: true,
+                reason,
+                source: "fallback",
+                aiError,
+            };
         }
     }
     const fallbackPlan = (0, mealPlan_service_1.buildFallbackWeeklyPlan)(nutritionProfile, dietaryPreferences, medicalConditions);
@@ -59,10 +97,12 @@ const ensureAndRefreshMealPlan = async (user) => {
         generatedBy: "fallback",
         nutritionProfile,
     });
-    const reason = (0, gemini_service_1.isGeminiConfigured)()
-        ? "gemini_unavailable"
-        : "gemini_not_configured";
-    return { refreshed: true, reason, source: "fallback" };
+    return {
+        refreshed: true,
+        reason: "gemini_not_configured",
+        source: "fallback",
+        aiError: undefined,
+    };
 };
 const sendDashboardResponse = async (userId, res, message, extraMeta) => {
     const [user, progress, todayMealPlan, latestPlan] = await Promise.all([
@@ -73,7 +113,7 @@ const sendDashboardResponse = async (userId, res, message, extraMeta) => {
     ]);
     if (!user)
         throw new appError_1.default("User not found", 404);
-    const dashboardData = (0, dashboard_service_1.buildDashboardFromState)(user, progress);
+    const dashboardData = (0, dashboard_service_1.buildDashboardFromState)(user, progress, latestPlan);
     const mealPlanSource = latestPlan?.generatedBy ?? "not_generated";
     res.status(200).json({
         success: true,
@@ -81,11 +121,13 @@ const sendDashboardResponse = async (userId, res, message, extraMeta) => {
         data: {
             ...dashboardData,
             todayMealPlan: todayMealPlan ?? null,
+            weeklyMealPlan: latestPlan?.plan ?? null,
         },
         meta: {
             hasActivePlan: Boolean(progress?.activePlan),
             canUseGemini: (0, gemini_service_1.isGeminiConfigured)(),
-            lastPlanGeneratedAt: progress?.lastPlanGeneratedAt?.toISOString(),
+            lastPlanGeneratedAt: latestPlan?.createdAt?.toISOString() ??
+                progress?.lastPlanGeneratedAt?.toISOString(),
             mealPlanSource,
             ...extraMeta,
         },
@@ -105,6 +147,7 @@ exports.getHomeDashboard = (0, asyncHandler_1.default)(async (req, res, next) =>
     await sendDashboardResponse(userId, res, "Dashboard data fetched successfully", {
         aiWeeklyRefreshed: refresh.refreshed,
         aiSuggestionsStatus: refresh.reason,
+        aiError: refresh.aiError,
     });
 });
 exports.generateDashboardPlan = (0, asyncHandler_1.default)(async (req, res, next) => {
@@ -179,6 +222,45 @@ exports.updateTodayDashboardProgress = (0, asyncHandler_1.default)(async (req, r
         return next(new appError_1.default(message, 400, "PROGRESS_UPDATE_FAILED"));
     }
     await sendDashboardResponse(userId, res, "Today's progress updated successfully");
+});
+exports.completeWorkoutSession = (0, asyncHandler_1.default)(async (req, res, next) => {
+    const user = await getOnboardedUser(String(req.user._id), next);
+    if (!user)
+        return;
+    const parsed = dashboard_validator_1.workoutSessionValidator.safeParse(req.body ?? {});
+    if (!parsed.success) {
+        return next(new appError_1.default(parsed.error.issues[0].message, 400, "VALIDATION_ERROR"));
+    }
+    const startedAt = parsed.data.startedAt
+        ? new Date(parsed.data.startedAt)
+        : new Date();
+    const completedAt = parsed.data.completedAt
+        ? new Date(parsed.data.completedAt)
+        : new Date();
+    try {
+        const result = await (0, userProgress_service_1.logWorkoutSession)(String(user._id), {
+            dayNumber: parsed.data.dayNumber,
+            dayLabel: parsed.data.dayLabel,
+            workoutTitle: parsed.data.workoutTitle,
+            plannedMinutes: parsed.data.plannedMinutes,
+            actualMinutes: parsed.data.actualMinutes,
+            caloriesBurned: parsed.data.caloriesBurned,
+            startedAt,
+            completedAt,
+            notes: parsed.data.notes,
+        });
+        res.status(200).json({
+            success: true,
+            message: "Workout session saved successfully",
+            data: result.session,
+        });
+    }
+    catch (error) {
+        const message = error instanceof Error
+            ? error.message
+            : "Failed to save workout session";
+        return next(new appError_1.default(message, 400, "WORKOUT_SESSION_SAVE_FAILED"));
+    }
 });
 exports.getTodayMealPlanHandler = (0, asyncHandler_1.default)(async (req, res, next) => {
     const userId = String(req.user._id);

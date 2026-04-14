@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getMe = exports.logout = exports.refresh = exports.login = exports.resendOtp = exports.verifyOtp = exports.signup = void 0;
+exports.changePassword = exports.getMe = exports.logout = exports.refresh = exports.login = exports.resendOtp = exports.verifyOtp = exports.signup = void 0;
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const user_model_1 = __importDefault(require("../user/user.model"));
 const appError_1 = __importDefault(require("../../utils/appError"));
@@ -205,5 +205,34 @@ exports.getMe = (0, asyncHandler_1.default)(async (req, res, next) => {
         data: {
             user: req.user,
         },
+    });
+});
+// CHANGE PASSWORD
+// ─────────────────────────────────────────────
+exports.changePassword = (0, asyncHandler_1.default)(async (req, res, next) => {
+    const userId = String(req.user._id);
+    const { currentPassword, newPassword } = req.body;
+    if (!currentPassword || !newPassword) {
+        return next(new appError_1.default("currentPassword and newPassword are required", 400));
+    }
+    if (newPassword.length < 6) {
+        return next(new appError_1.default("New password must be at least 6 characters", 400));
+    }
+    const user = await user_model_1.default.findById(userId);
+    if (!user) {
+        return next(new appError_1.default("User not found", 404));
+    }
+    // Verify current password
+    const isPasswordValid = await bcryptjs_1.default.compare(currentPassword, user.password || "");
+    if (!isPasswordValid) {
+        return next(new appError_1.default("Current password is incorrect", 401));
+    }
+    // Hash and update password
+    const hashedPassword = await bcryptjs_1.default.hash(newPassword, 10);
+    user.password = hashedPassword;
+    await user.save();
+    res.status(200).json({
+        success: true,
+        message: "Password changed successfully",
     });
 });

@@ -10,6 +10,7 @@ const router = express_1.default.Router();
 router.use(auth_middleware_1.authenticate);
 // Analyze food image and extract nutritional content
 router.post("/analyze", food_controller_1.analyzeFoodHandler);
+router.post("/describe", food_controller_1.analyzeFoodTextHandler);
 // Log analyzed food to daily progress
 router.post("/log", food_controller_1.logFoodHandler);
 exports.default = router;

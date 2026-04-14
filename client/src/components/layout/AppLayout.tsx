@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
-import { NavLink, Outlet } from "react-router-dom";
+import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { InstallPrompt } from "../ui/InstallPrompt";
 
 interface TabItem {
   to: string;
@@ -176,11 +177,24 @@ const tabs: TabItem[] = [
 ];
 
 export const AppLayout = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const openCamera = () => {
+    navigate("/log-food/scan", {
+      state: { openCapture: true, openCamera: true },
+    });
+  };
+
+  const isScanActive = location.pathname === "/log-food/scan";
+
   return (
     <div className="min-h-screen bg-base-black text-base-white">
       <main className="pb-[116px]">
         <Outlet />
       </main>
+
+      {/* PWA install banner */}
+      <InstallPrompt />
 
       <div className="fixed bottom-0 left-1/2 z-40 w-full max-w-[450px] -translate-x-1/2 px-4 pb-safe pb-3">
         <div className="relative">
@@ -224,19 +238,18 @@ export const AppLayout = () => {
             ))}
           </div>
 
-          <NavLink
-            to="/log-food/scan"
-            className={({ isActive }) =>
-              `absolute left-1/2 top-0 flex h-[72px] w-[72px] -translate-x-1/2 -translate-y-[26px] items-center justify-center rounded-full border border-accent-primary/60 transition-all ${
-                isActive
-                  ? "bg-accent-primary text-base-white shadow-[0_8px_28px_rgba(11,95,255,0.35)]"
-                  : "bg-base-black text-accent-primary hover:bg-accent-primary/10"
-              }`
-            }
+          <button
+            type="button"
+            onClick={openCamera}
+            className={`absolute left-1/2 top-0 flex h-[72px] w-[72px] -translate-x-1/2 -translate-y-[26px] items-center justify-center rounded-full border border-accent-primary/60 transition-all ${
+              isScanActive
+                ? "bg-accent-primary text-base-white shadow-[0_8px_28px_rgba(11,95,255,0.35)]"
+                : "bg-base-black text-accent-primary hover:ring-4 hover:ring-accent-primary/30"
+            }`}
             aria-label="Scan food"
           >
             <CameraIcon />
-          </NavLink>
+          </button>
         </div>
       </div>
     </div>

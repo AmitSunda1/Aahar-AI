@@ -4,6 +4,7 @@ import AppError from "../../utils/appError";
 import User from "../user/user.model";
 import {
   analyzeFoodImage,
+  analyzeFoodText,
 } from "../../services/ai/foodAnalysis.service";
 import { analyzeFoodRequestValidator } from "../../validators/foodAnalysis.validator";
 import {
@@ -92,6 +93,73 @@ export const analyzeFoodHandler = asyncHandler(
       return next(
         new AppError(
           "Failed to analyze food image",
+          500,
+          "ANALYSIS_FAILED",
+        ),
+      );
+    }
+  },
+);
+
+/**
+ * POST /food/describe
+ * Analyze a typed or transcribed food description without an image
+ * Body: { description: string, quantity?: number, unit?: string, notes?: string }
+ */
+export const analyzeFoodTextHandler = asyncHandler(
+  async (req: Request, res: Response, next: any) => {
+    const userId = String(req.user!._id);
+
+    const user = await User.findById(userId);
+    if (!user) return next(new AppError("User not found", 404));
+    if (!user.isCompletedOnboarding) {
+      return next(new AppError("Complete onboarding first", 400));
+    }
+
+    const { description, quantity, unit, notes } = req.body;
+
+    const validationResult = analyzeFoodRequestValidator.safeParse({
+      description,
+      quantity,
+      unit,
+      notes,
+    });
+
+    if (!validationResult.success) {
+      return next(
+        new AppError(
+          validationResult.error.issues[0]?.message || "Invalid request data",
+          400,
+        ),
+      );
+    }
+
+    try {
+      const analysis = await analyzeFoodText(validationResult.data);
+
+      res.status(200).json({
+        success: true,
+        message: "Food description analyzed successfully",
+        data: analysis,
+      });
+    } catch (error) {
+      if (error instanceof AppError) {
+        if (error.code === "GEMINI_QUOTA_EXCEEDED") {
+          return next(
+            new AppError(
+              error.message + " Please wait a moment and try again.",
+              error.statusCode,
+              error.code,
+            ),
+          );
+        }
+
+        return next(error);
+      }
+
+      return next(
+        new AppError(
+          "Failed to analyze food description",
           500,
           "ANALYSIS_FAILED",
         ),

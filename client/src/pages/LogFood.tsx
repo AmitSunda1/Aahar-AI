@@ -1,1 +1,5 @@
-export { LogFood } from "./log-food/LogFood";
+import { FoodEntryFlow } from "../features/food/components/FoodEntryFlow";
+
+export const LogFood = () => {
+  return <FoodEntryFlow />;
+};

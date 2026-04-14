@@ -129,6 +129,19 @@ const userDailyProgressSchema = new mongoose_1.Schema({
     notes: { type: [String], default: undefined },
     completedAt: { type: Date },
 }, { _id: false });
+const workoutSessionSchema = new mongoose_1.Schema({
+    date: { type: Date, required: true },
+    dateKey: { type: String, required: true, trim: true },
+    dayNumber: { type: Number, required: true, min: 1, max: 7 },
+    dayLabel: { type: String, required: true, trim: true },
+    workoutTitle: { type: String, required: true, trim: true },
+    plannedMinutes: { type: Number, required: true, min: 0 },
+    actualMinutes: { type: Number, required: true, min: 0 },
+    caloriesBurned: { type: Number, required: true, min: 0 },
+    startedAt: { type: Date, required: true },
+    completedAt: { type: Date, required: true },
+    notes: { type: [String], default: [] },
+}, { _id: false });
 const userProgressSchema = new mongoose_1.Schema({
     user: {
         type: mongoose_1.Schema.Types.ObjectId,
@@ -140,6 +153,7 @@ const userProgressSchema = new mongoose_1.Schema({
     activePlan: { type: userPlanSchema },
     planHistory: { type: [userPlanSchema], default: [] },
     dailyProgress: { type: [userDailyProgressSchema], default: [] },
+    workoutSessions: { type: [workoutSessionSchema], default: [] },
     lastPlanGeneratedAt: { type: Date },
     lastProgressUpdatedAt: { type: Date },
 }, { timestamps: true });

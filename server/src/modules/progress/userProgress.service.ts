@@ -3,6 +3,7 @@ import UserProgress from "./userProgress.model";
 import type {
   DailyActuals,
   DailyProgressStatus,
+  WorkoutSession,
   UserDailyProgress,
   UserPlan,
 } from "./userProgress.model";
@@ -87,6 +88,7 @@ export const saveGeneratedPlan = async (
       user: userId,
       planHistory: [],
       dailyProgress: [],
+      workoutSessions: [],
     });
 
   if (progress.activePlan) {
@@ -111,6 +113,9 @@ export const upsertDailyProgress = async (
   if (!progress?.activePlan) {
     throw new Error("No active plan found for user progress");
   }
+
+  const workoutSessions = progress.workoutSessions ?? [];
+  progress.workoutSessions = workoutSessions;
 
   const dateKey = toDateKey(date);
   const targets = {
@@ -138,10 +143,37 @@ export const upsertDailyProgress = async (
       ? progress.dailyProgress[existingIndex].actuals
       : defaults;
 
+  // Accumulate numeric values instead of overwriting them
   const mergedActuals: DailyActuals = {
     ...defaults,
     ...previousActuals,
-    ...actualsPatch,
+    caloriesConsumed:
+      (previousActuals.caloriesConsumed ?? 0) +
+      (actualsPatch.caloriesConsumed ?? 0),
+    carbsConsumed:
+      (previousActuals.carbsConsumed ?? 0) + (actualsPatch.carbsConsumed ?? 0),
+    proteinConsumed:
+      (previousActuals.proteinConsumed ?? 0) +
+      (actualsPatch.proteinConsumed ?? 0),
+    fatConsumed:
+      (previousActuals.fatConsumed ?? 0) + (actualsPatch.fatConsumed ?? 0),
+    waterMlConsumed:
+      (previousActuals.waterMlConsumed ?? 0) +
+      (actualsPatch.waterMlConsumed ?? 0),
+    stepsCompleted:
+      (previousActuals.stepsCompleted ?? 0) +
+      (actualsPatch.stepsCompleted ?? 0),
+    exerciseMinutesCompleted:
+      (previousActuals.exerciseMinutesCompleted ?? 0) +
+      (actualsPatch.exerciseMinutesCompleted ?? 0),
+    caloriesBurned:
+      (previousActuals.caloriesBurned ?? 0) +
+      (actualsPatch.caloriesBurned ?? 0),
+    // Weight should be overwritten with the latest logged value, not accumulated.
+    weightKg:
+      typeof actualsPatch.weightKg === "number"
+        ? actualsPatch.weightKg
+        : previousActuals.weightKg,
   };
 
   const adherenceScore = calculateAdherenceScore(targets, mergedActuals);
@@ -174,4 +206,73 @@ export const getUserProgress = async (
   userId: mongoose.Types.ObjectId | string,
 ) => {
   return UserProgress.findOne({ user: userId });
+};
+
+export interface LogWorkoutSessionInput {
+  dayNumber: number;
+  dayLabel: string;
+  workoutTitle: string;
+  plannedMinutes: number;
+  actualMinutes: number;
+  caloriesBurned: number;
+  startedAt: Date;
+  completedAt: Date;
+  notes?: string[];
+}
+
+export const logWorkoutSession = async (
+  userId: mongoose.Types.ObjectId | string,
+  input: LogWorkoutSessionInput,
+) => {
+  const progress = await UserProgress.findOne({ user: userId });
+
+  if (!progress?.activePlan) {
+    throw new Error("No active plan found for user progress");
+  }
+
+  const date = input.completedAt;
+  const dateKey = toDateKey(date);
+
+  const nextSession: WorkoutSession = {
+    date,
+    dateKey,
+    dayNumber: input.dayNumber,
+    dayLabel: input.dayLabel,
+    workoutTitle: input.workoutTitle,
+    plannedMinutes: input.plannedMinutes,
+    actualMinutes: input.actualMinutes,
+    caloriesBurned: input.caloriesBurned,
+    startedAt: input.startedAt,
+    completedAt: input.completedAt,
+    notes: input.notes,
+  };
+
+  const existingIndex = progress.workoutSessions.findIndex(
+    (session) =>
+      session.dateKey === dateKey && session.dayNumber === input.dayNumber,
+  );
+
+  if (existingIndex >= 0) {
+    progress.workoutSessions[existingIndex] = nextSession;
+  } else {
+    progress.workoutSessions.push(nextSession);
+  }
+
+  await progress.save();
+
+  await upsertDailyProgress(
+    userId,
+    date,
+    {
+      exerciseMinutesCompleted: input.actualMinutes,
+      caloriesBurned: input.caloriesBurned,
+    },
+    input.notes,
+  );
+
+  const refreshed = await UserProgress.findOne({ user: userId });
+  return {
+    session: nextSession,
+    progress: refreshed,
+  };
 };

@@ -129,7 +129,7 @@ export const StepShell = ({
       )}
 
       {/* Scrollable content area */}
-      <div className="flex-1 overflow-y-auto min-h-0">{children}</div>
+      <div className="flex-1 overflow-y-auto min-h-0 scrollbar-hide">{children}</div>
 
       {/* Pinned footer */}
       <div className="flex-shrink-0 pt-4 pb-8">{renderedFooter}</div>

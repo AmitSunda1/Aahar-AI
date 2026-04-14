@@ -79,3 +79,17 @@ export interface UserDailyProgress {
   notes?: string[];
   completedAt?: Date;
 }
+
+export interface WorkoutSession {
+  date: Date;
+  dateKey: string;
+  dayNumber: number;
+  dayLabel: string;
+  workoutTitle: string;
+  plannedMinutes: number;
+  actualMinutes: number;
+  caloriesBurned: number;
+  startedAt: Date;
+  completedAt: Date;
+  notes?: string[];
+}
