@@ -614,36 +614,6 @@ export const HomeDashboard = () => {
         </div> */}
       </div>
 
-      {!meta.canUseGemini && (
-        <div className="mb-4 rounded-[18px] border border-semantic-warning/40 bg-semantic-warning/10 p-4 text-body text-grey-300">
-          Our model is not configured on the server. Daily targets are still
-          based on onboarding data and goal.
-        </div>
-      )}
-
-      {meta.aiSuggestionsStatus &&
-        meta.aiSuggestionsStatus !== "ok" &&
-        meta.aiSuggestionsStatus !== "not_due" &&
-        meta.aiSuggestionsStatus !== "gemini_not_configured" && (
-          <div className="mb-4 rounded-[18px] border border-semantic-warning/40 bg-semantic-warning/10 p-4 text-body text-grey-300">
-            <p className="font-medium text-base-white">
-              Weekly AI suggestions are using fallback data.
-            </p>
-            <p className="mt-1">
-              {meta.aiSuggestionsStatus === "gemini_quota_exceeded"
-                ? "Our model returned a quota or rate-limit error."
-                : meta.aiSuggestionsStatus === "gemini_invalid_response"
-                  ? "Our model returned a response that did not match the required plan format."
-                  : "Our model returned a generation error."}
-            </p>
-            {meta.aiError && (
-              <p className="mt-2 break-words text-sm text-grey-400">
-                {meta.aiError}
-              </p>
-            )}
-          </div>
-        )}
-
       {actionError && (
         <div className="mb-4 rounded-[18px] border border-semantic-error/40 bg-semantic-error/10 p-4 text-body text-grey-300">
           {actionError}

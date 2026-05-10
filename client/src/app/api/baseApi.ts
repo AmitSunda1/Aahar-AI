@@ -14,7 +14,16 @@ const baseQuery = fetchBaseQuery({
 
 const shouldSkipReauth = (args: string | FetchArgs) => {
   const url = typeof args === "string" ? args : args.url;
-  return url.startsWith("/auth/");
+  return [
+    "/auth/login",
+    "/auth/signup",
+    "/auth/verify-otp",
+    "/auth/resend-otp",
+    "/auth/refresh",
+    "/auth/logout",
+    "/auth/forgot-password",
+    "/auth/reset-password",
+  ].some((authUrl) => url.startsWith(authUrl));
 };
 
 export const baseQueryWithReauth: BaseQueryFn<

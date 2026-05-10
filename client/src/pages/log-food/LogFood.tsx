@@ -85,6 +85,13 @@ const modeCards: Array<{
 
 export const LogFood = () => {
   const speechRecognitionRef = useRef<BrowserSpeechRecognition | null>(null);
+  // Tracks whether we should restart recognition after a pause (continuous mode)
+  const keepVoiceAliveRef = useRef(false);
+  // Tracks the active mode inside the recognition callbacks (avoids stale closure)
+  const activeModeRef = useRef<LogMode>("manual");
+  // Accumulates final transcript chunks across pauses
+  const voiceFinalTranscriptRef = useRef("");
+
   const [activeMode, setActiveMode] = useState<LogMode>("manual");
   const [description, setDescription] = useState("");
   const [quantity, setQuantity] = useState<string>("");
@@ -101,6 +108,11 @@ export const LogFood = () => {
 
   const isSubmitting = isAnalyzing || isLogging;
 
+  // Keep activeModeRef in sync so recognition callbacks can read current mode
+  useEffect(() => {
+    activeModeRef.current = activeMode;
+  }, [activeMode]);
+
   useEffect(() => {
     const speechWindow = window as SpeechWindow;
     const RecognitionCtor =
@@ -114,21 +126,50 @@ export const LogFood = () => {
     setVoiceSupported(true);
 
     const recognition = new RecognitionCtor();
-    recognition.continuous = false;
+    // continuous = true prevents the browser from stopping after a pause
+    recognition.continuous = true;
     recognition.interimResults = true;
     recognition.lang = "en-IN";
 
     recognition.onresult = (event) => {
-      const transcript = Array.from({ length: event.results.length })
-        .map((_, index) => event.results[index]?.[0]?.transcript || "")
+      // Accumulate final results and show interim ones live
+      let finalTranscript = voiceFinalTranscriptRef.current;
+      let interimTranscript = "";
+
+      for (let i = 0; i < event.results.length; i++) {
+        const result = event.results[i];
+        const text = (result?.[0]?.transcript || "").replace(/\s+/g, " ").trim();
+        if (!text) continue;
+
+        if (result.isFinal) {
+          finalTranscript = [finalTranscript, text].filter(Boolean).join(" ");
+        } else {
+          interimTranscript = [interimTranscript, text].filter(Boolean).join(" ");
+        }
+      }
+
+      voiceFinalTranscriptRef.current = finalTranscript;
+      const nextDescription = [finalTranscript, interimTranscript]
+        .filter(Boolean)
         .join(" ")
         .trim();
 
-      setDescription(transcript);
+      setDescription(nextDescription);
       setError(null);
     };
 
-    recognition.onerror = () => {
+    recognition.onerror = (event) => {
+      // "no-speech" and "aborted" fire on natural pauses — not real errors
+      const errorEvent = event as { error?: string };
+      const isRecoverable =
+        errorEvent.error === "no-speech" || errorEvent.error === "aborted";
+
+      if (isRecoverable && keepVoiceAliveRef.current) {
+        // Let onend handle the restart; don't show an error to the user
+        return;
+      }
+
+      keepVoiceAliveRef.current = false;
       setIsListening(false);
       setError(
         "Voice capture could not complete. Please try again or type the meal manually.",
@@ -136,12 +177,23 @@ export const LogFood = () => {
     };
 
     recognition.onend = () => {
+      // Auto-restart while the user hasn't pressed Stop and is still in voice mode
+      if (keepVoiceAliveRef.current && activeModeRef.current === "voice") {
+        try {
+          recognition.start();
+          return;
+        } catch {
+          // If restart fails immediately, fall through and stop gracefully
+        }
+      }
+
       setIsListening(false);
     };
 
     speechRecognitionRef.current = recognition;
 
     return () => {
+      keepVoiceAliveRef.current = false;
       recognition.stop();
       speechRecognitionRef.current = null;
     };
@@ -199,12 +251,20 @@ export const LogFood = () => {
 
     setError(null);
     setSuccess(null);
-    setDescription("");
+    voiceFinalTranscriptRef.current = "";
+    keepVoiceAliveRef.current = true;
     setIsListening(true);
-    speechRecognitionRef.current.start();
+    try {
+      speechRecognitionRef.current.start();
+    } catch {
+      keepVoiceAliveRef.current = false;
+      setIsListening(false);
+      setError("Voice capture could not start. Please try again.");
+    }
   };
 
   const stopVoiceCapture = () => {
+    keepVoiceAliveRef.current = false;
     speechRecognitionRef.current?.stop();
     setIsListening(false);
   };

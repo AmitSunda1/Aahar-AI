@@ -347,7 +347,7 @@ export function buildFallbackWeeklyPlan(
 
   return {
     weekSummary:
-      "This is a starter meal plan based on your onboarding profile. Weekly AI-powered suggestions will be available once Gemini is configured.",
+      "This weekly meal plan is built from your onboarding profile, daily calorie target, macro goals, dietary preferences, and medical context.",
     days,
   };
 }

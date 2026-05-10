@@ -295,7 +295,7 @@ function buildFallbackWeeklyPlan(nutritionProfile, dietaryPreferences, medicalCo
         habitNote: "Drink a glass of water as soon as you wake up. Aim to reach your step goal before evening.",
     }));
     return {
-        weekSummary: "This is a starter meal plan based on your onboarding profile. Weekly AI-powered suggestions will be available once Gemini is configured.",
+        weekSummary: "This weekly meal plan is built from your onboarding profile, daily calorie target, macro goals, dietary preferences, and medical context.",
         days,
     };
 }

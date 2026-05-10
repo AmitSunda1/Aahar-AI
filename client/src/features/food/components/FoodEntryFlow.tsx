@@ -72,6 +72,7 @@ interface SpeechRecognitionResultList {
 
 interface SpeechRecognitionEvent extends Event {
   results: SpeechRecognitionResultList;
+  resultIndex?: number;
 }
 
 interface SpeechRecognitionErrorEvent extends Event {
@@ -118,6 +119,9 @@ const formatQuantitySummary = (row: QuantityRow) => {
   return pieces.join(" ").trim();
 };
 
+const normalizeTranscript = (value: string) =>
+  value.replace(/\s+/g, " ").trim();
+
 const buildRequestDescription = (
   description: string,
   quantityRows: QuantityRow[],
@@ -147,6 +151,8 @@ export const FoodEntryFlow = () => {
   const speechRecognitionRef = useRef<BrowserSpeechRecognition | null>(null);
   const activeModeRef = useRef<FoodMode | null>(null);
   const keepVoiceAliveRef = useRef(false);
+  const voiceBaseDescriptionRef = useRef("");
+  const voiceFinalTranscriptRef = useRef("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraVideoRef = useRef<HTMLVideoElement>(null);
   const scannerGuideRef = useRef<HTMLDivElement>(null);
@@ -273,12 +279,41 @@ export const FoodEntryFlow = () => {
     recognition.lang = "en-IN";
 
     recognition.onresult = (event) => {
-      const transcript = Array.from({ length: event.results.length })
-        .map((_, index) => event.results[index]?.[0]?.transcript || "")
-        .join(" ")
-        .trim();
+      const hasResultIndex = typeof event.resultIndex === "number";
+      let finalTranscript = hasResultIndex
+        ? voiceFinalTranscriptRef.current
+        : "";
+      let interimTranscript = "";
+      const startIndex = hasResultIndex ? event.resultIndex! : 0;
 
-      setDescription(transcript);
+      for (let index = startIndex; index < event.results.length; index += 1) {
+        const result = event.results[index];
+        const transcript = normalizeTranscript(result?.[0]?.transcript || "");
+        if (!transcript) continue;
+
+        if (result.isFinal) {
+          finalTranscript = normalizeTranscript(
+            [finalTranscript, transcript].filter(Boolean).join(" "),
+          );
+        } else {
+          interimTranscript = normalizeTranscript(
+            [interimTranscript, transcript].filter(Boolean).join(" "),
+          );
+        }
+      }
+
+      voiceFinalTranscriptRef.current = finalTranscript;
+      const nextDescription = normalizeTranscript(
+        [
+          voiceBaseDescriptionRef.current,
+          finalTranscript,
+          interimTranscript,
+        ]
+          .filter(Boolean)
+          .join(" "),
+      );
+
+      setDescription(nextDescription);
       clearMessages();
       setAnalysis(null);
     };
@@ -390,6 +425,8 @@ export const FoodEntryFlow = () => {
 
     if (mode !== "voice") {
       keepVoiceAliveRef.current = false;
+      voiceBaseDescriptionRef.current = "";
+      voiceFinalTranscriptRef.current = "";
       speechRecognitionRef.current?.stop();
       setIsListening(false);
     }
@@ -405,6 +442,8 @@ export const FoodEntryFlow = () => {
 
     clearMessages();
     setAnalysis(null);
+    voiceBaseDescriptionRef.current = description.trim();
+    voiceFinalTranscriptRef.current = "";
     keepVoiceAliveRef.current = true;
     setIsListening(true);
     try {

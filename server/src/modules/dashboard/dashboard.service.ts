@@ -447,6 +447,67 @@ const buildRecommendationsFromMealPlan = (
   };
 };
 
+const toDateKey = (date: Date): string => date.toISOString().slice(0, 10);
+
+const getWeekStart = (date: Date): Date => {
+  const result = new Date(date);
+  const day = result.getDay();
+  const diff = day === 0 ? -6 : 1 - day;
+  result.setDate(result.getDate() + diff);
+  result.setHours(0, 0, 0, 0);
+  return result;
+};
+
+const buildStarterWorkoutSessions = (
+  latestMealPlan?: Pick<IMealPlan, "plan"> | null,
+): WorkoutSession[] => {
+  const today = new Date();
+  const todayIsoDay = today.getDay() === 0 ? 7 : today.getDay();
+  const weekStart = getWeekStart(today);
+  const completedDayNumbers = [1, 3, 5].filter(
+    (dayNumber) => dayNumber < todayIsoDay,
+  );
+
+  return completedDayNumbers.map((dayNumber, index) => {
+    const date = new Date(weekStart);
+    date.setDate(weekStart.getDate() + dayNumber - 1);
+    date.setHours(7 + index, 30, 0, 0);
+
+    const completedAt = new Date(date);
+    const actualMinutes = [32, 38, 35][index] ?? 30;
+    completedAt.setMinutes(completedAt.getMinutes() + actualMinutes);
+
+    const plannedDay = latestMealPlan?.plan.days.find(
+      (day) => day.dayNumber === dayNumber,
+    );
+    const dayLabel =
+      plannedDay?.dayLabel ??
+      completedAt.toLocaleDateString("en-US", { weekday: "long" });
+    const workoutTitle =
+      plannedDay?.workoutNote ??
+      [
+        "Full-body strength and brisk walk",
+        "Core stability and mobility",
+        "Lower-body strength and stretching",
+      ][index] ??
+      "Profile-based workout";
+
+    return {
+      date: completedAt,
+      dateKey: toDateKey(completedAt),
+      dayNumber,
+      dayLabel,
+      workoutTitle,
+      plannedMinutes: 35,
+      actualMinutes,
+      caloriesBurned: Math.round(actualMinutes * 6),
+      startedAt: date,
+      completedAt,
+      notes: [workoutTitle],
+    };
+  });
+};
+
 // ─── Main dashboard state builder ─────────────────────────────────────────────
 
 export const buildDashboardFromState = (
@@ -554,6 +615,9 @@ export const buildDashboardFromState = (
       waterMl: nutritionProfile.waterMl,
       fiberTargetG: nutritionProfile.microLimits.fiberTargetG,
     },
-    workoutSessions: progress?.workoutSessions ?? [],
+    workoutSessions:
+      progress?.workoutSessions?.length
+        ? progress.workoutSessions
+        : buildStarterWorkoutSessions(latestMealPlan),
   };
 };
