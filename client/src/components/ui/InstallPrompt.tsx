@@ -16,6 +16,9 @@ export const InstallPrompt = () => {
   const [isInstalled, setIsInstalled] = useState(false);
   const [isReady, setIsReady] = useState(false);
   const [showManualSteps, setShowManualSteps] = useState(false);
+  const isiOS = /iPad|iPhone|iPod/.test(window.navigator.userAgent);
+  const canShowNativeInstall = Boolean(installEvent);
+  const shouldShowManualInstall = !canShowNativeInstall && isiOS;
 
   const dismissPrompt = () => {
     setDismissed(true);
@@ -43,6 +46,7 @@ export const InstallPrompt = () => {
       e.preventDefault();
       setInstallEvent(e as BeforeInstallPromptEvent);
       setIsReady(true);
+      setShowManualSteps(false);
     };
 
     const onAppInstalled = () => {
@@ -54,9 +58,13 @@ export const InstallPrompt = () => {
     window.addEventListener("beforeinstallprompt", handler);
     window.addEventListener("appinstalled", onAppInstalled);
 
-    // Some browsers never dispatch beforeinstallprompt immediately.
-    // We still surface a manual install hint after a short delay.
-    const readyTimer = window.setTimeout(() => setIsReady(true), 1200);
+    // iOS Safari does not support beforeinstallprompt, so we still show
+    // the install prompt with manual instructions there.
+    const readyTimer = window.setTimeout(() => {
+      if (isiOS) {
+        setIsReady(true);
+      }
+    }, 1200);
 
     return () => {
       window.removeEventListener("beforeinstallprompt", handler);
@@ -67,7 +75,9 @@ export const InstallPrompt = () => {
 
   const handleInstall = async () => {
     if (!installEvent) {
-      setShowManualSteps(true);
+      if (shouldShowManualInstall) {
+        setShowManualSteps(true);
+      }
       return;
     }
 
@@ -81,11 +91,11 @@ export const InstallPrompt = () => {
         dismissPrompt();
       }
     } catch {
-      setShowManualSteps(true);
+      if (shouldShowManualInstall) {
+        setShowManualSteps(true);
+      }
     }
   };
-
-  const isiOS = /iPad|iPhone|iPod/.test(window.navigator.userAgent);
 
   if (dismissed || isInstalled || !isReady) return null;
 
@@ -112,11 +122,11 @@ export const InstallPrompt = () => {
               Install Aahar AI
             </p>
             <p className="mt-1 text-[13px] leading-5 text-grey-300">
-              {installEvent
+              {canShowNativeInstall
                 ? "Open it like a real app with faster access to meals, workouts, and progress."
                 : isiOS
                   ? "Add it to your home screen for quick access from Safari."
-                  : "Pin Aahar AI to your device for a cleaner app-like experience."}
+                  : "Install is not available in this browser right now."}
             </p>
           </div>
 
@@ -141,13 +151,15 @@ export const InstallPrompt = () => {
         </div>
 
         <div className="mt-5 flex justify-end">
-          <button
-            type="button"
-            onClick={handleInstall}
-            className="h-12 min-w-[132px] rounded-full bg-accent-primary px-5 text-[14px] font-semibold text-base-white shadow-[0_12px_30px_rgba(11,95,255,0.34)] transition-all hover:bg-[#245fff] active:scale-[0.98]"
-          >
-            Install
-          </button>
+          {canShowNativeInstall || shouldShowManualInstall ? (
+            <button
+              type="button"
+              onClick={handleInstall}
+              className="h-12 min-w-[132px] rounded-full bg-accent-primary px-5 text-[14px] font-semibold text-base-white shadow-[0_12px_30px_rgba(11,95,255,0.34)] transition-all hover:bg-[#245fff] active:scale-[0.98]"
+            >
+              {canShowNativeInstall ? "Install" : "Show steps"}
+            </button>
+          ) : null}
         </div>
       </div>
 

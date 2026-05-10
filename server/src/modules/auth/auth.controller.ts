@@ -80,6 +80,7 @@ export const signup = asyncHandler(
 
     // Generate OTP and hash it for storage
     const otp = generateOtp();
+    console.log(`Generated OTP for ${email}: ${otp}`); // Log OTP for debugging (remove in production)
     const hashedOtp = await bcrypt.hash(otp, 10);
     const otpExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 

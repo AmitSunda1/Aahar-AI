@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 // import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "../../../app/ThemeContext";
+import { RevealSection } from "../../../components/ui/RevealSection";
 import { DashboardSkeleton } from "../../../components/ui/skeletons/DashboardSkeleton";
 import { useGetMeQuery } from "../../auth/authApi";
 import {
@@ -18,51 +19,10 @@ import type {
 } from "../dashboard.types";
 
 const FILL_COLOR = "#0B5FFF";
-
-const RevealSection = ({
-  children,
-  className,
-  delay = 0,
-}: {
-  children: React.ReactNode;
-  className: string;
-  delay?: number;
-}) => {
-  const ref = useRef<HTMLElement | null>(null);
-  const [isVisible, setIsVisible] = useState(false);
-
-  useEffect(() => {
-    const node = ref.current;
-    if (!node) return;
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsVisible(true);
-          observer.disconnect();
-        }
-      },
-      { threshold: 0.12 },
-    );
-
-    observer.observe(node);
-    return () => observer.disconnect();
-  }, []);
-
-  return (
-    <section
-      ref={ref as React.RefObject<HTMLElement>}
-      className={className}
-      style={{
-        opacity: isVisible ? 1 : 0,
-        transform: isVisible ? "translateY(0px)" : "translateY(16px)",
-        transition: `opacity 500ms ease ${delay}ms, transform 500ms ease ${delay}ms`,
-      }}
-    >
-      {children}
-    </section>
-  );
-};
+const DARK_CARD_BORDER_CLASS =
+  "border border-transparent [background:padding-box_linear-gradient(180deg,rgba(15,17,24,0.96),rgba(10,12,18,0.88)),border-box_linear-gradient(135deg,rgba(255,255,255,0.18),rgba(11,95,255,0.22)_38%,rgba(255,255,255,0.08)_72%,rgba(255,255,255,0.15))]";
+const DARK_CARD_BORDER_SOFT_CLASS =
+  "border border-transparent [background:padding-box_linear-gradient(180deg,rgba(16,18,24,0.92),rgba(11,13,19,0.84)),border-box_linear-gradient(135deg,rgba(255,255,255,0.14),rgba(11,95,255,0.16)_40%,rgba(255,255,255,0.06)_75%,rgba(255,255,255,0.12))]";
 
 const MacroRing = ({
   value,
@@ -73,6 +33,7 @@ const MacroRing = ({
   target: number;
   label: string;
 }) => {
+  const { isDark } = useTheme();
   const rawProgress = target > 0 ? (value / target) * 100 : 0;
   const progress = Math.min(100, Math.max(0, Math.round(rawProgress)));
   const [animatedProgress, setAnimatedProgress] = useState(0);
@@ -82,6 +43,9 @@ const MacroRing = ({
   const circumference = 2 * Math.PI * radius;
   const offset = circumference - (animatedProgress / 100) * circumference;
   const progressStroke = FILL_COLOR;
+  const surfaceClass = isDark
+    ? `${DARK_CARD_BORDER_SOFT_CLASS} shadow-[0_14px_34px_rgba(0,0,0,0.24)]`
+    : "border-base-white/[0.08] bg-grey-900/45";
 
   useEffect(() => {
     setAnimatedProgress(0);
@@ -93,7 +57,9 @@ const MacroRing = ({
   }, [progress]);
 
   return (
-    <div className="flex flex-col items-center gap-3">
+    <div
+      className={`flex min-w-0 flex-col items-center rounded-[22px] border px-2 py-4 ${surfaceClass}`}
+    >
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
         <circle
           cx={size / 2}
@@ -133,8 +99,8 @@ const MacroRing = ({
           /{target}g
         </text>
       </svg>
-      <p className="text-body text-grey-300">{label}</p>
-      <p className="text-caption text-grey-500">
+      <p className="mt-1 text-center text-[12px] font-semibold text-grey-300">{label}</p>
+      <p className="text-center text-caption text-grey-500">
         {Math.round(rawProgress)}% of goal
       </p>
     </div>
@@ -148,6 +114,7 @@ const WeightChart = ({
   points: WeightPoint[];
   onLogWeight: (weightKg: number) => Promise<void>;
 }) => {
+  const { isDark } = useTheme();
   const [isWeightLogOpen, setIsWeightLogOpen] = useState(false);
   const [weightToLog, setWeightToLog] = useState("");
   const [isSavingWeight, setIsSavingWeight] = useState(false);
@@ -238,7 +205,13 @@ const WeightChart = ({
   };
 
   return (
-    <div className="rounded-[24px] border border-grey-700/50 bg-gradient-to-r from-grey-900/80 to-grey-900/40 p-4 shadow-card-md">
+    <div
+      className={`rounded-[24px] p-4 shadow-card-md ${
+        isDark
+          ? `${DARK_CARD_BORDER_CLASS} shadow-[0_20px_44px_rgba(0,0,0,0.28)]`
+          : "border border-grey-700/50 bg-gradient-to-r from-grey-900/80 to-grey-900/40"
+      }`}
+    >
       <div className="mb-4 flex items-center justify-between">
         <h3 className="text-h3">Weight</h3>
         <button
@@ -452,32 +425,31 @@ const getMealAccent = (mealType: DayMeal["mealType"]) => {
     case "breakfast":
       return {
         chip: "border-[#f6b34d]/30 bg-[#f6b34d]/12 text-[#ffd38c]",
-        card:
-          "border-[#f6b34d]/20 bg-[linear-gradient(180deg,rgba(246,179,77,0.11),rgba(28,28,30,0.88))]",
+        card: "bg-accent-primary/10",
       };
     case "lunch":
       return {
         chip: "border-[#57c785]/30 bg-[#57c785]/12 text-[#95f0b6]",
-        card:
-          "border-[#57c785]/20 bg-[linear-gradient(180deg,rgba(87,199,133,0.10),rgba(28,28,30,0.88))]",
+        card: "bg-accent-primary/10",
       };
     case "dinner":
       return {
         chip: "border-[#ff8a5b]/30 bg-[#ff8a5b]/12 text-[#ffc0a8]",
-        card:
-          "border-[#ff8a5b]/20 bg-[linear-gradient(180deg,rgba(255,138,91,0.11),rgba(28,28,30,0.88))]",
+        card: "bg-accent-primary/10",
       };
     default:
       return {
         chip: "border-accent-primary/25 bg-accent-primary/10 text-accent-primary",
-        card:
-          "border-accent-primary/20 bg-[linear-gradient(180deg,rgba(11,95,255,0.11),rgba(28,28,30,0.88))]",
+        card: "bg-accent-primary/10",
       };
   }
 };
 
 const formatTag = (tag: string) =>
   tag.replace(/_/g, " ").replace(/\b\w/g, (char) => char.toUpperCase());
+
+const mealTabAccentClass =
+  "border-accent-primary/25 bg-accent-primary/10 text-accent-primary";
 
 const MealMacroPill = ({
   label,
@@ -511,10 +483,10 @@ const MealOptionCard = ({
 
   return (
     <div
-      className={`rounded-[20px] border p-4 ${
+      className={`rounded-[20px] p-4 ${
         featured
           ? accentCardClass
-          : "border-grey-700/45 bg-grey-900/55"
+          : "border border-grey-700/45 bg-grey-900/55"
       }`}
     >
       <div className="flex items-start justify-between gap-3">
@@ -576,14 +548,14 @@ const MealPlanCard = ({ meal }: { meal: DayMeal }) => {
 
   return (
     <div
-      className="rounded-[24px] border border-grey-700/45 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(10,10,14,0.28))] p-4"
+      // className="rounded-[24px] bg-base-white/[0.04] p-4"
       style={{
         opacity: isVisible ? 1 : 0,
         transform: isVisible ? "translateY(0px)" : "translateY(10px)",
         transition: "opacity 220ms ease, transform 260ms ease",
       }}
     >
-      <div className="flex items-start justify-between gap-3">
+      {/* <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-[11px] uppercase tracking-[0.22em] text-grey-500">
             {formatMealType(meal.mealType)}
@@ -593,7 +565,7 @@ const MealPlanCard = ({ meal }: { meal: DayMeal }) => {
         <div className={`rounded-full border px-3 py-1.5 text-caption ${accent.chip}`}>
           {meal.targetMacros.calories} kcal target
         </div>
-      </div>
+      </div> */}
 
       <div className="mt-4 space-y-3">
         {featuredOption && (
@@ -756,9 +728,8 @@ export const HomeDashboard = () => {
   }
 
   const d = data.data;
-  const meta = data.meta;
-  const kcalRingSize = 136;
-  const kcalRingStroke = 10;
+  const kcalRingSize = 150;
+  const kcalRingStroke = 12;
   const kcalRingRadius = (kcalRingSize - kcalRingStroke) / 2;
   const kcalRingCircumference = 2 * Math.PI * kcalRingRadius;
   const kcalRingOffset =
@@ -769,12 +740,28 @@ export const HomeDashboard = () => {
   const user = meData?.data?.user;
   const hour = new Date().getHours();
   const greetingPrefix =
-    hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
+    hour < 12 ? "Good Morning" : hour < 17 ? "Good Afternoon" : "Good Evening";
   const userName =
     user?.name?.trim().split(/\s+/)[0] ||
     user?.email?.split("@")[0] ||
     d.greetingTitle ||
     "there";
+  const dateLabel = new Date().toLocaleDateString(undefined, {
+    weekday: "long",
+    month: "short",
+    day: "numeric",
+  });
+  const isDark = theme === "dark";
+  const dashboardCardClass = isDark
+    ? `${DARK_CARD_BORDER_CLASS} shadow-[0_20px_60px_rgba(0,0,0,0.32)]`
+    : "border-base-white/[0.08] bg-grey-900/45";
+  const activityCardClass = isDark
+    ? `${DARK_CARD_BORDER_SOFT_CLASS} shadow-[0_18px_42px_rgba(0,0,0,0.26)]`
+    : "border-base-white/[0.08] bg-grey-900/50";
+  const planCardClass = isDark
+    ? `${DARK_CARD_BORDER_CLASS} shadow-[0_20px_48px_rgba(0,0,0,0.28)]`
+    : "border-grey-700/35 bg-grey-900/70";
+  const planNoteClass = isDark ? "bg-base-white/[0.04]" : "bg-grey-900/55";
 
   // const planSourceLabel =
   //   meta.mealPlanSource === "gemini"
@@ -790,38 +777,38 @@ export const HomeDashboard = () => {
   //       : "border-grey-700/50 bg-grey-900/50 text-grey-300";
 
   return (
-    <div className="bg-base-black px-4 pb-8 pt-4 text-base-white">
-      <div className="mb-4 flex items-start justify-between gap-3">
-        <div>
-          <h1 className="text-h1">{`${greetingPrefix}, ${userName}`}</h1>
-          <p className="mt-1 text-body text-grey-500">
-            {meta.hasActivePlan
-              ? "Saved dashboard targets"
-              : "Starter dashboard targets"}{" "}
-            • {d.todayStatus.replace(/_/g, " ")}
+    <div className="bg-base-black px-5 pb-10 pt-[max(28px,env(safe-area-inset-top))] text-base-white">
+      <div className="mb-6">
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <p className="rounded-full border border-accent-primary/25 bg-accent-primary/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-accent-primary">
+            {dateLabel}
           </p>
+
+          {/* Theme Toggle Button */}
+          <button
+            type="button"
+            onClick={toggleTheme}
+            aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-base-white/[0.1] bg-base-white/[0.05] text-base-white transition-all hover:bg-base-white/[0.09] active:scale-95"
+          >
+            {theme === "dark" ? (
+              // Sun icon
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="1.8" />
+                <path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+              </svg>
+            ) : (
+              // Moon icon
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            )}
+          </button>
         </div>
 
-        {/* Theme Toggle Button */}
-        <button
-          type="button"
-          onClick={toggleTheme}
-          aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-grey-700/50 bg-grey-900/40 transition-all hover:bg-grey-900/70 active:scale-95"
-        >
-          {theme === "dark" ? (
-            // Sun icon
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="1.8" />
-              <path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-            </svg>
-          ) : (
-            // Moon icon
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          )}
-        </button>
+        <h1 className="text-[31px] font-semibold leading-[38px] tracking-normal">
+          {`${greetingPrefix}, ${userName}`}
+        </h1>
       </div>
 
       {actionError && (
@@ -830,17 +817,25 @@ export const HomeDashboard = () => {
         </div>
       )}
 
-      <RevealSection className="rounded-[26px] border border-grey-700/50 bg-[radial-gradient(circle_at_top_left,rgba(11,95,255,0.22),rgba(9,9,13,0.2)_38%,rgba(9,9,13,0.9)_100%)] p-5 shadow-card-lg">
-        <div className="flex items-start justify-between">
+      <RevealSection
+        className={`rounded-[28px] border p-5  ${dashboardCardClass}`}
+      >
+        <div className="mb-5 flex items-start justify-between gap-3">
           <div>
-            <p className="text-label-lg uppercase text-grey-300">Eaten</p>
-            <p className="text-[34px] leading-[36px] font-semibold">
-              {d.caloriesEaten}
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-accent-primary">
+              Today's energy
             </p>
-            <p className="text-body text-grey-500">kcal</p>
+            <h2 className="mt-1 text-[22px] font-semibold leading-7">
+              Calorie balance
+            </h2>
           </div>
+          <p className="rounded-full border border-base-white/[0.08] bg-base-white/[0.05] px-3 py-1.5 text-[12px] font-medium text-grey-300">
+            Goal {d.calorieGoal} kcal
+          </p>
+        </div>
 
-          <div className="relative flex h-[136px] w-[136px] items-center justify-center">
+        <div className="flex justify-center">
+          <div className="relative flex h-[150px] w-[150px] items-center justify-center">
             <svg
               width={kcalRingSize}
               height={kcalRingSize}
@@ -870,21 +865,37 @@ export const HomeDashboard = () => {
               />
             </svg>
             <div className="text-center">
-              <p className="text-[36px] leading-[36px] font-semibold">
+              <p className="text-[38px] leading-[38px] font-semibold">
                 {d.caloriesLeft}
               </p>
-              <p className="mt-1 text-label-lg uppercase text-grey-300">
+              <p className="mt-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-grey-300">
                 kcal left
               </p>
             </div>
           </div>
+        </div>
 
-          <div className="text-right">
-            <p className="text-label-lg uppercase text-grey-300">Burned</p>
-            <p className="text-[34px] leading-[36px] font-semibold">
-              {d.caloriesBurned}
+        <div className="mt-5 grid grid-cols-3 gap-2">
+          <div className="rounded-[18px] border border-base-white/[0.08] bg-base-white/[0.05] px-3 py-3">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-grey-500">
+              Eaten
             </p>
-            <p className="text-body text-grey-500">kcal</p>
+            <p className="mt-1 text-[20px] font-semibold leading-6">{d.caloriesEaten}</p>
+            <p className="text-[11px] text-grey-500">kcal</p>
+          </div>
+          <div className="rounded-[18px] border border-base-white/[0.08] bg-base-white/[0.05] px-3 py-3">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-grey-500">
+              Left
+            </p>
+            <p className="mt-1 text-[20px] font-semibold leading-6">{d.caloriesLeft}</p>
+            <p className="text-[11px] text-grey-500">kcal</p>
+          </div>
+          <div className="rounded-[18px] border border-base-white/[0.08] bg-base-white/[0.05] px-3 py-3">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-grey-500">
+              Burned
+            </p>
+            <p className="mt-1 text-[20px] font-semibold leading-6">{d.caloriesBurned}</p>
+            <p className="text-[11px] text-grey-500">kcal</p>
           </div>
         </div>
 
@@ -919,13 +930,26 @@ export const HomeDashboard = () => {
         </div> */}
       </RevealSection>
 
-      <RevealSection className="mt-6" delay={60}>
-        <h2 className="text-h2">Macros</h2>
-        <div className="mt-4 grid grid-cols-3 gap-2">
+      <RevealSection
+        className={`mt-5 rounded-[28px] border p-5 shadow-card ${dashboardCardClass}`}
+        delay={60}
+      >
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-grey-500">
+              Nutrition
+            </p>
+            <h2 className="mt-1 text-[22px] font-semibold leading-7">Macros</h2>
+          </div>
+          <span className="rounded-full border border-grey-700/50 bg-grey-900/70 px-3 py-1.5 text-[12px] font-medium text-grey-300">
+            Today
+          </span>
+        </div>
+        <div className="grid grid-cols-3 gap-2">
           <MacroRing
             value={d.macros.carbsConsumed}
             target={d.macros.carbs}
-            label="Carbohydrates"
+            label="Carbs"
           />
           <MacroRing
             value={d.macros.fatConsumed}
@@ -940,13 +964,19 @@ export const HomeDashboard = () => {
         </div>
       </RevealSection>
 
-      <RevealSection
-        className="mt-7 grid grid-cols-2 items-stretch gap-3"
-        delay={120}
-      >
-        <div className="flex min-h-[250px] flex-col rounded-[24px] border border-grey-700/50 bg-gradient-to-r from-grey-900/80 to-grey-900/30 p-4 shadow-card">
-          <p className="text-h3">Steps</p>
-          <p className="mt-2 text-[30px] leading-[32px] font-semibold">
+      <RevealSection className="mt-5" delay={120}>
+        <div className="mb-3 flex items-end justify-between">
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-grey-500">
+              Movement
+            </p>
+            <h2 className="mt-1 text-[22px] font-semibold leading-7">Activity</h2>
+          </div>
+        </div>
+        <div className="grid grid-cols-2 items-stretch gap-3">
+        <div className={`flex min-h-[198px] flex-col rounded-[24px] border p-4 shadow-card ${activityCardClass}`}>
+          <p className="text-[15px] font-semibold text-grey-300">Steps</p>
+          <p className="mt-2 text-[28px] leading-[32px] font-semibold">
             {d.stepCount}
           </p>
           <p className="text-caption text-grey-500">
@@ -1007,9 +1037,9 @@ export const HomeDashboard = () => {
           </div>
         </div>
 
-        <div className="flex min-h-[250px] flex-col rounded-[24px] border border-grey-700/50 bg-gradient-to-r from-grey-900/80 to-grey-900/30 p-4 shadow-card">
-          <p className="text-h3">Exercise</p>
-          <p className="mt-2 text-[30px] leading-[32px] font-semibold">
+        <div className={`flex min-h-[198px] flex-col rounded-[24px] border p-4 shadow-card ${activityCardClass}`}>
+          <p className="text-[15px] font-semibold text-grey-300">Exercise</p>
+          <p className="mt-2 text-[28px] leading-[32px] font-semibold">
             {d.exerciseCalories} kcal
           </p>
           <p className="text-caption text-grey-500">
@@ -1023,32 +1053,35 @@ export const HomeDashboard = () => {
           <button
             type="button"
             onClick={() => navigate("/workout")}
-            className="mt-auto h-11 w-full rounded-full border border-accent-primary/70 text-[34px] leading-none text-accent-primary"
+            className="mt-auto h-11 w-full rounded-full border border-accent-primary/50 bg-accent-primary/10 text-[30px] leading-none text-accent-primary transition-colors hover:bg-accent-primary/15"
           >
             +
           </button>
         </div>
+        </div>
       </RevealSection>
 
       <RevealSection className="mt-7" delay={180}>
-        <div className="mb-4 rounded-[26px] border border-grey-700/50 bg-[radial-gradient(circle_at_top_left,rgba(11,95,255,0.15),rgba(28,28,30,0.92)_42%,rgba(14,14,18,0.98)_100%)] p-5 shadow-card-md">
+        <div className={`mb-4 rounded-[26px] border p-5 shadow-card-md ${planCardClass}`}>
           <div className="flex items-start justify-between gap-3">
             <div>
               <p className="text-label-sm uppercase tracking-[0.2em] text-accent-primary/80">
                 Today's Plan
               </p>
               <h2 className="mt-2 text-h2">
-                {todayPlan ? `${todayPlan.dayLabel} menu` : "Fresh ideas for today"}
+                {todayPlan ? "Today's menu" : "Fresh ideas for today"}
               </h2>
               <p className="mt-1 max-w-[30ch] text-body text-grey-400">
                 {todayPlan
-                  ? "A cleaner, hunger-inducing view of your next meals, built around your targets."
+                  ? "Simple meal picks for the day, tuned to your targets and easy to scan."
                   : "Refreshed every 7 days from your onboarding profile and goal."}
               </p>
             </div>
-            {/* <div className="rounded-full border border-base-white/10 bg-base-white/6 px-3 py-1.5 text-caption text-grey-300">
-              Updated {lastGeneratedLabel}
-            </div> */}
+            {/* {todayPlan && (
+              <div className="rounded-full bg-base-white/8 px-3 py-1.5 text-caption text-grey-300">
+                {todayPlan.dayLabel} • {todayPlan.meals.length} meals
+              </div>
+            )} */}
           </div>
 
           {todayPlan ? (
@@ -1091,7 +1124,6 @@ export const HomeDashboard = () => {
               <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 scrollbar-hide">
                 {todayPlan.meals.map((meal, mealIdx) => {
                   const isActive = mealIdx === selectedMealIndex;
-                  const accent = getMealAccent(meal.mealType);
 
                   return (
                     <button
@@ -1100,8 +1132,8 @@ export const HomeDashboard = () => {
                       onClick={() => setSelectedMealIndex(mealIdx)}
                       className={`shrink-0 rounded-full border px-4 py-2 text-label-sm transition-all duration-200 ${
                         isActive
-                          ? `${accent.chip} shadow-[0_8px_20px_rgba(0,0,0,0.18)]`
-                          : "border-grey-700/50 bg-grey-900/55 text-grey-300 hover:border-grey-500/70 hover:bg-grey-900/75"
+                          ? `${mealTabAccentClass} shadow-[0_8px_20px_rgba(0,0,0,0.18)]`
+                          : "bg-base-white/6 text-grey-300 hover:bg-base-white/10"
                       }`}
                     >
                       {formatMealType(meal.mealType)}
@@ -1118,8 +1150,8 @@ export const HomeDashboard = () => {
               )}
 
               <div className="grid grid-cols-2 gap-3">
-                <div className="rounded-[22px] border border-grey-700/45 bg-grey-900/50 p-4">
-                  <p className="text-caption uppercase tracking-[0.18em] text-grey-500">
+                <div className={`rounded-[20px] p-4 ${planNoteClass}`}>
+                  <p className="text-caption uppercase tracking-[0.18em] text-black">
                     Daily Habit
                   </p>
                   <p className="mt-2 text-body text-grey-300">
@@ -1127,8 +1159,8 @@ export const HomeDashboard = () => {
                   </p>
                 </div>
 
-                <div className="rounded-[22px] border border-grey-700/45 bg-grey-900/50 p-4">
-                  <p className="text-caption uppercase tracking-[0.18em] text-grey-500">
+                <div className={`rounded-[20px] p-4 ${planNoteClass}`}>
+                  <p className="text-caption uppercase tracking-[0.18em] text-black">
                     Workout
                   </p>
                   <p className="mt-2 text-body text-grey-300">

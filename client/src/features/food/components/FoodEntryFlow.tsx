@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useTheme } from "../../../app/ThemeContext";
 import { Button } from "../../../components/ui/Button";
+import { RevealSection } from "../../../components/ui/RevealSection";
 import { TextInput } from "../../../components/ui/TextInput";
+import { LogFoodSkeleton } from "../../../components/ui/skeletons/LogFoodSkeleton";
 import { compressImage } from "../../../utils/imageCompression";
 import {
   useAnalyzeFoodImageMutation,
@@ -146,6 +149,7 @@ const getPrimaryQuantity = (quantityRows: QuantityRow[]) => {
 };
 
 export const FoodEntryFlow = () => {
+  const { isDark } = useTheme();
   const location = useLocation();
   const navigate = useNavigate();
   const speechRecognitionRef = useRef<BrowserSpeechRecognition | null>(null);
@@ -189,6 +193,7 @@ export const FoodEntryFlow = () => {
     (location.state as { openCamera?: boolean } | null)?.openCamera,
   );
   const isScannerRoute = location.pathname === "/log-food/scan";
+  const [isMounting, setIsMounting] = useState(true);
 
   const [analyzeFoodText, { isLoading: isAnalyzingText }] =
     useAnalyzeFoodTextMutation();
@@ -204,6 +209,11 @@ export const FoodEntryFlow = () => {
     () => getPrimaryQuantity(quantityRows),
     [quantityRows],
   );
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setIsMounting(false), 280);
+    return () => window.clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     activeModeRef.current = activeMode;
@@ -1379,6 +1389,14 @@ export const FoodEntryFlow = () => {
 
   const showFullscreenScanner =
     isScannerRoute && activeMode === "capture" && captureStep === "upload";
+  const surfaceCardClass = isDark
+    ? "border border-grey-700/50 bg-gradient-to-r from-grey-900/80 to-grey-900/30 shadow-card"
+    : "border border-[#d9e3f5] bg-white shadow-[0_14px_32px_rgba(15,23,42,0.06)]";
+  const inactiveModeIconClass = isDark
+    ? "border-grey-700/70 bg-grey-900/50 text-grey-400"
+    : "border-[#d6e0f0] bg-[#f6f9ff] text-[#6d7990]";
+
+  if (isMounting && !showFullscreenScanner) return <LogFoodSkeleton />;
 
   return (
     <div className="bg-base-black px-4 pb-8 pt-4 text-base-white">
@@ -1386,24 +1404,26 @@ export const FoodEntryFlow = () => {
         renderFullscreenScanner()
       ) : (
         <>
-          <section className="rounded-[26px] border border-grey-700/50 bg-[radial-gradient(circle_at_top_left,rgba(11,95,255,0.22),rgba(9,9,13,0.2)_38%,rgba(9,9,13,0.9)_100%)] p-5 shadow-card-lg">
-            <p className="text-label-lg uppercase text-grey-300">Log Food</p>
-            <h1 className="mt-2 text-[34px] font-semibold leading-[38px]">
+          <section className="mb-5 animate-soft-rise">
+            <p className="text-label-sm uppercase tracking-[0.24em] text-accent-primary/80">
+              Log Food
+            </p>
+            <h1 className="mt-2 text-h1">
               Add a meal in seconds
             </h1>
-            <p className="mt-3 text-body text-grey-500">
+            <p className="mt-1 max-w-[28ch] text-body text-grey-500">
               Pick a mode, review macros, save.
             </p>
           </section>
 
           {error && (
-            <div className="mt-4 rounded-[18px] border border-semantic-error/40 bg-semantic-error/10 p-4 text-body text-grey-300">
+            <div className="mt-4 rounded-[18px] border border-semantic-error/40 bg-semantic-error/10 p-4 text-body text-grey-300 animate-soft-rise">
               {error}
             </div>
           )}
 
           {success && (
-            <div className="mt-4 rounded-[22px] border border-semantic-success/35 bg-semantic-success/10 p-5">
+            <div className="mt-4 rounded-[22px] border border-semantic-success/35 bg-semantic-success/10 p-5 animate-soft-rise">
               <p className="text-label-lg uppercase text-semantic-success">
                 Saved
               </p>
@@ -1433,15 +1453,18 @@ export const FoodEntryFlow = () => {
           )}
 
           {isScannerRoute ? (
-            <section className="mt-6 rounded-[24px] border border-grey-700/50 bg-gradient-to-r from-grey-900/80 to-grey-900/30 p-4 shadow-card">
+            <RevealSection
+              className={`mt-6 rounded-[24px] p-4 ${surfaceCardClass}`}
+              delay={80}
+            >
               {renderCapturePanel()}
-            </section>
+            </RevealSection>
           ) : (
-            <section className="mt-6 space-y-3">
+            <RevealSection className="mt-6 space-y-3" delay={80}>
               {modeCards.map((card) => (
                 <div
                   key={card.mode}
-                  className="rounded-[24px] border border-grey-700/50 bg-gradient-to-r from-grey-900/80 to-grey-900/30 p-4 shadow-card"
+                  className={`rounded-[24px] p-4 ${surfaceCardClass}`}
                 >
                   <button
                     type="button"
@@ -1459,7 +1482,11 @@ export const FoodEntryFlow = () => {
                       </p>
                     </div>
                     <div
-                      className={`mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border text-[22px] leading-none ${activeMode === card.mode ? "border-accent-primary/50 bg-accent-primary/15 text-accent-primary" : "border-grey-700/70 bg-grey-900/50 text-grey-400"}`}
+                      className={`mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border text-[22px] leading-none ${
+                        activeMode === card.mode
+                          ? "border-accent-primary/50 bg-accent-primary/15 text-accent-primary"
+                          : inactiveModeIconClass
+                      }`}
                     >
                       {activeMode === card.mode ? "−" : "+"}
                     </div>
@@ -1474,7 +1501,7 @@ export const FoodEntryFlow = () => {
                   )}
                 </div>
               ))}
-            </section>
+            </RevealSection>
           )}
         </>
       )}

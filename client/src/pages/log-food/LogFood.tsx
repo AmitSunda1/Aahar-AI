@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "../../components/ui/Button";
+import { RevealSection } from "../../components/ui/RevealSection";
 import { TextInput } from "../../components/ui/TextInput";
 import { LogFoodSkeleton } from "../../components/ui/skeletons/LogFoodSkeleton";
 import {
@@ -281,7 +282,7 @@ export const LogFood = () => {
 
   return (
     <div className="min-h-screen bg-base-black px-4 pb-8 pt-6 text-base-white">
-      <section className="rounded-[26px] border border-grey-700/50 bg-gradient-to-r from-grey-900/85 to-grey-900/35 p-5 shadow-card-lg">
+      <section className="animate-soft-rise">
         <p className="inline-flex rounded-full border border-grey-700/60 bg-grey-900/40 px-3 py-1 text-label-sm uppercase tracking-[0.16em] text-grey-300">
           Log Food
         </p>
@@ -317,13 +318,13 @@ export const LogFood = () => {
       </section>
 
       {error && (
-        <div className="mt-5 rounded-[20px] border border-semantic-error/35 bg-semantic-error/10 p-4 text-body text-grey-300">
+        <div className="mt-5 rounded-[20px] border border-semantic-error/35 bg-semantic-error/10 p-4 text-body text-grey-300 animate-soft-rise">
           {error}
         </div>
       )}
 
       {success && (
-        <div className="mt-5 rounded-[22px] border border-semantic-success/35 bg-semantic-success/10 p-5">
+        <div className="mt-5 rounded-[22px] border border-semantic-success/35 bg-semantic-success/10 p-5 animate-soft-rise">
           <p className="text-label-sm uppercase tracking-[0.16em] text-semantic-success">
             Saved
           </p>
@@ -341,7 +342,10 @@ export const LogFood = () => {
         </div>
       )}
 
-      <section className="mt-6 rounded-[26px] border border-grey-700/50 bg-gradient-to-r from-grey-900/80 to-grey-900/30 p-5 shadow-card">
+      <RevealSection
+        className="mt-6 rounded-[26px] border border-grey-700/50 bg-gradient-to-r from-grey-900/80 to-grey-900/30 p-5 shadow-card"
+        delay={80}
+      >
         <p className="text-label-sm uppercase tracking-[0.16em] text-grey-500">
           {activeCard.eyebrow}
         </p>
@@ -465,7 +469,7 @@ export const LogFood = () => {
             </Button>
           </div>
         )}
-      </section>
+      </RevealSection>
     </div>
   );
 };
