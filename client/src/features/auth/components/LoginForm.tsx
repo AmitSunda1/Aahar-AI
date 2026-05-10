@@ -1,6 +1,13 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate, Navigate } from "react-router-dom";
 import { useLoginMutation, useGetMeQuery } from "../authApi";
+import { AuthCard } from "./AuthShell";
+
+const fieldClass =
+  "h-[52px] w-full rounded-[18px] border border-base-white/10 bg-base-white/[0.07] px-4 text-[15px] text-base-white placeholder:text-grey-500 outline-none transition-all focus:border-accent-primary/70 focus:bg-base-white/[0.1] focus:ring-4 focus:ring-accent-primary/15";
+
+const labelClass =
+  "mb-2 block text-[11px] font-semibold uppercase tracking-[0.16em] text-grey-400";
 
 const getApiErrorMessage = (error: unknown, fallback: string) => {
   if (!error || typeof error !== "object") {
@@ -67,20 +74,19 @@ export const LoginForm = () => {
     routeAuthError;
 
   return (
-    <div className="w-full max-w-md p-6 bg-base-black/80 backdrop-blur-md rounded-card border border-grey-700 w-[90%] mx-auto mt-auto mb-12 shadow-card-lg relative z-10 animate-soft-rise">
-      <h2 className="mb-6 text-h2 font-bold text-center text-base-white">
-        Welcome Back
-      </h2>
-
+    <AuthCard
+      title="Welcome back"
+      subtitle="Sign in to continue tracking your meals, workouts, and daily progress."
+    >
       {loginError && (
-        <div className="p-3 mb-4 text-body-sm text-semantic-error bg-semantic-error/10 border border-semantic-error rounded-input animate-soft-rise">
+        <div className="mb-4 rounded-[18px] border border-semantic-error/[0.35] bg-semantic-error/[0.12] px-4 py-3 text-[13px] leading-5 text-semantic-error animate-soft-rise">
           {loginError}
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-5">
         <div>
-          <label className="block mb-1 text-label-sm text-grey-300 uppercase tracking-wider">
+          <label className={labelClass}>
             Email
           </label>
           <input
@@ -88,50 +94,51 @@ export const LoginForm = () => {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            className="w-full px-4 h-12 bg-base-black/50 border border-grey-700 rounded-input text-base-white placeholder-grey-500 focus:ring-1 focus:ring-accent-primary focus:border-accent-primary outline-none transition-all"
-            placeholder="Enter your email"
+            className={fieldClass}
+            placeholder="you@example.com"
           />
         </div>
         <div>
-          <label className="block mb-1 text-label-sm text-grey-300 uppercase tracking-wider">
-            Password
-          </label>
+          <div className="mb-2 flex items-center justify-between">
+            <label className="block text-[11px] font-semibold uppercase tracking-[0.16em] text-grey-400">
+              Password
+            </label>
+            <Link
+              to="/forgot-password"
+              className="text-[12px] font-semibold text-accent-primary transition-colors hover:text-base-white"
+            >
+              Reset
+            </Link>
+          </div>
           <input
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            className="w-full px-4 h-12 bg-base-black/50 border border-grey-700 rounded-input text-base-white placeholder-grey-500 focus:ring-1 focus:ring-accent-primary focus:border-accent-primary outline-none transition-all"
-            placeholder="Enter your password"
+            className={fieldClass}
+            placeholder="Your password"
           />
         </div>
         <button
           type="submit"
           disabled={isLoading}
-          className="w-full h-12 mt-2 font-semibold text-[14px] leading-[20px] text-base-white bg-accent-primary rounded-full hover:bg-accent-primary/90 disabled:opacity-50 transition-all active:scale-[0.98] shadow-card-md"
+          className="h-[52px] w-full rounded-full bg-accent-primary text-[15px] font-semibold text-base-white shadow-[0_14px_34px_rgba(11,95,255,0.35)] transition-all hover:bg-[#245fff] disabled:cursor-not-allowed disabled:opacity-55 active:scale-[0.98]"
         >
-          {isLoading ? "Logging in..." : "Login"}
+          {isLoading ? "Signing in..." : "Sign in"}
         </button>
       </form>
 
-      <p className="mt-6 text-body-sm text-center text-grey-300">
-        Don't have an account?{" "}
-        <Link
-          to="/signup"
-          className="text-base-white font-medium hover:underline"
-        >
-          Sign up
-        </Link>
-      </p>
-      <p className="mt-3 text-body-sm text-center text-grey-300">
-        Forgot your password?{" "}
-        <Link
-          to="/forgot-password"
-          className="text-base-white font-medium hover:underline"
-        >
-          Reset it
-        </Link>
-      </p>
-    </div>
+      <div className="mt-6 rounded-[20px] border border-base-white/[0.08] bg-base-white/[0.04] px-4 py-3 text-center">
+        <p className="text-[13px] leading-5 text-grey-300">
+          New to Aahar AI?{" "}
+          <Link
+            to="/signup"
+            className="font-semibold text-base-white transition-colors hover:text-accent-primary"
+          >
+            Create account
+          </Link>
+        </p>
+      </div>
+    </AuthCard>
   );
 };

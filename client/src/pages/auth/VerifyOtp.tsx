@@ -5,7 +5,7 @@ import {
   useResendOtpMutation,
   useGetMeQuery,
 } from "../../features/auth/authApi";
-import splashBg from "../../assets/Sign-up-img.webp";
+import { AuthCard, AuthShell } from "../../features/auth";
 
 export const VerifyOtp = () => {
   const location = useLocation();
@@ -21,6 +21,16 @@ export const VerifyOtp = () => {
   const [resendOtp, { isLoading: isResending }] = useResendOtpMutation();
 
   const { data: meData } = useGetMeQuery();
+
+  useEffect(() => {
+    if (countdown <= 0) {
+      setCanResend(true);
+      return;
+    }
+    const timer = setTimeout(() => setCountdown((c) => c - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [countdown]);
+
   if (meData?.data?.user) {
     if (!meData.data.user.isCompletedOnboarding) {
       return <Navigate to="/onboarding" replace />;
@@ -31,15 +41,6 @@ export const VerifyOtp = () => {
   if (!email) {
     return <Navigate to="/signup" replace />;
   }
-
-  useEffect(() => {
-    if (countdown <= 0) {
-      setCanResend(true);
-      return;
-    }
-    const timer = setTimeout(() => setCountdown((c) => c - 1), 1000);
-    return () => clearTimeout(timer);
-  }, [countdown]);
 
   const handleOtpChange = (index: number, value: string) => {
     if (!/^\d?$/.test(value)) return;
@@ -101,45 +102,27 @@ export const VerifyOtp = () => {
   const isComplete = otpString.length === 6;
 
   return (
-    <div className="relative flex flex-col items-center justify-end w-full h-screen min-h-screen text-base-white overflow-hidden bg-base-black">
-      {/* Header / Back Button */}
-      <div className="absolute top-0 left-0 w-full px-6 pt-12 z-20">
-        <button
-          onClick={() => navigate(-1)}
-          className="flex items-center gap-2 px-1 py-2 rounded-full bg-transparent text-base-white hover:text-grey-300 transition-all active:scale-[0.96] animate-soft-drop"
-        >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M19 12H5M12 19l-7-7 7-7"/>
-          </svg>
-          <span className="text-[15px] font-medium">Back</span>
-        </button>
-      </div>
-
-      <div className="absolute inset-0 w-full h-full z-0">
-        <img
-          src={splashBg}
-          alt="Fitness Background"
-          className="object-cover w-full h-full"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/50 to-black/10" />
-      </div>
-
-      <div className="relative z-10 mx-auto mb-12 w-[92%] max-w-md rounded-card border border-grey-700 bg-base-black/80 p-4 shadow-card-lg backdrop-blur-md sm:p-6 animate-soft-rise">
-        <h2 className="text-[22px] leading-[30px] font-semibold text-base-white mb-2">
-          Check your email
-        </h2>
-        <p className="text-[14px] leading-[22px] text-grey-300 mb-8">
-          We sent a 6-digit code to{" "}
-          <span className="text-base-white font-medium">{email}</span>
-        </p>
+    <AuthShell>
+      <AuthCard
+        title="Check your email"
+        subtitle="Enter the 6-digit code we sent to verify your account."
+      >
+        <div className="mb-6 rounded-[18px] border border-base-white/[0.08] bg-base-white/[0.05] px-4 py-3">
+          <p className="text-[12px] uppercase tracking-[0.16em] text-grey-500">
+            Sent to
+          </p>
+          <p className="mt-1 truncate text-[14px] font-semibold text-base-white">
+            {email}
+          </p>
+        </div>
 
         {error && (
-          <div className="p-3 mb-4 text-[13px] text-semantic-error bg-semantic-error/10 border border-semantic-error rounded-input animate-soft-rise">
+          <div className="mb-4 rounded-[18px] border border-semantic-error/[0.35] bg-semantic-error/[0.12] px-4 py-3 text-[13px] leading-5 text-semantic-error animate-soft-rise">
             {(error as any)?.data?.message || "Invalid OTP. Please try again."}
           </div>
         )}
 
-        <div className="mb-8 grid grid-cols-6 gap-2" onPaste={handlePaste}>
+        <div className="mb-6 grid grid-cols-6 gap-2" onPaste={handlePaste}>
           {otp.map((digit, i) => (
             <input
               key={i}
@@ -152,7 +135,7 @@ export const VerifyOtp = () => {
               value={digit}
               onChange={(e) => handleOtpChange(i, e.target.value)}
               onKeyDown={(e) => handleKeyDown(i, e)}
-              className="h-12 min-w-0 w-full rounded-input border border-grey-700 bg-base-black/50 text-center text-[18px] font-semibold text-base-white outline-none transition-all focus:border-accent-primary focus:ring-1 focus:ring-accent-primary sm:h-14 sm:text-[20px]"
+              className="h-[52px] min-w-0 w-full rounded-[16px] border border-base-white/10 bg-base-white/[0.07] text-center text-[18px] font-semibold text-base-white outline-none transition-all focus:border-accent-primary/70 focus:bg-base-white/[0.1] focus:ring-4 focus:ring-accent-primary/15"
             />
           ))}
         </div>
@@ -160,18 +143,18 @@ export const VerifyOtp = () => {
         <button
           onClick={handleVerify}
           disabled={!isComplete || isLoading}
-          className="w-full h-12 font-semibold text-[14px] leading-[20px] text-base-white bg-accent-primary rounded-full hover:bg-accent-primary/90 disabled:opacity-40 transition-all active:scale-[0.98] shadow-card-md mb-6"
+          className="mb-6 h-[52px] w-full rounded-full bg-accent-primary text-[15px] font-semibold text-base-white shadow-[0_14px_34px_rgba(11,95,255,0.35)] transition-all hover:bg-[#245fff] disabled:cursor-not-allowed disabled:opacity-45 active:scale-[0.98]"
         >
           {isLoading ? "Verifying..." : "Verify Email"}
         </button>
 
-        <p className="text-center text-[13px] text-grey-300">
+        <p className="text-center text-[13px] leading-5 text-grey-300">
           Didn't receive it?{" "}
           {canResend ? (
             <button
               onClick={handleResend}
               disabled={isResending}
-              className="text-base-white font-medium hover:underline disabled:opacity-50"
+              className="font-semibold text-base-white transition-colors hover:text-accent-primary disabled:opacity-50"
             >
               {isResending ? "Sending..." : "Resend code"}
             </button>
@@ -179,7 +162,7 @@ export const VerifyOtp = () => {
             <span className="text-grey-500">Resend in {countdown}s</span>
           )}
         </p>
-      </div>
-    </div>
+      </AuthCard>
+    </AuthShell>
   );
 };

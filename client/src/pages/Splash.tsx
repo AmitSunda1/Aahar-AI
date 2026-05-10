@@ -7,61 +7,86 @@ export const Splash = () => {
     const navigate = useNavigate();
 
     return (
-        <div className="relative flex flex-col items-center justify-end w-full h-screen min-h-screen text-base-white overflow-hidden bg-base-black">
-            {/* Header / Logo */}
-            <div className="absolute -top-7 left-0 w-full px-6 pt-12 z-20 flex items-center">
+        <div className="relative flex min-h-screen w-full flex-col overflow-hidden bg-base-black text-base-white">
+            <div className="absolute inset-0 z-0">
+                <img
+                    src={splashBg}
+                    alt=""
+                    className="h-full w-full object-cover"
+                    aria-hidden="true"
+                />
+                <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.24)_0%,rgba(0,0,0,0.18)_36%,rgba(0,0,0,0.92)_100%)]" />
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_78%,rgba(11,95,255,0.26),transparent_34%)]" />
+            </div>
+
+            <header className="relative z-20 flex items-center justify-between px-6 pt-[max(24px,env(safe-area-inset-top))]">
                 <img
                     src={splashlogo}
                     alt="Aahar AI"
-                    className="h-23 w-auto object-contain animate-soft-drop"
+                    className="h-20 w-auto object-contain"
                 />
-            </div>
+                {/* <button
+                    type="button"
+                    onClick={() => navigate("/login")}
+                    className="rounded-full border border-base-white/[0.14] bg-base-black/35 px-4 py-2 text-[13px] font-semibold text-base-white backdrop-blur-md transition-all active:scale-[0.98]"
+                >
+                    Sign in
+                </button> */}
+            </header>
 
-            {/* Background Image with Gradient Overlay */}
-            <div className="absolute inset-0 w-full h-full z-0">
-                <img
-                    src={splashBg}
-                    alt="Fitness Background"
-                    className="object-cover w-full h-full"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/10" />
-            </div>
+            <main className="relative z-10 mt-auto px-6 pb-[max(30px,env(safe-area-inset-bottom))]">
+                <div className="absolute inset-x-3 bottom-3 top-[-18px] -z-10 rounded-[34px] bg-base-black/42 shadow-[0_24px_80px_rgba(0,0,0,0.38)] backdrop-blur-[1px]" />
+                <div className="mb-5 flex w-fit items-center gap-2 rounded-full border border-base-white/10 bg-base-white/[0.08] px-3 py-2 backdrop-blur-md animate-soft-rise">
+                    <span className="h-2 w-2 rounded-full bg-accent-primary shadow-[0_0_18px_rgba(11,95,255,0.8)]" />
+                    <span className="text-[12px] font-semibold uppercase tracking-[0.16em] text-grey-200">
+                        Built for Indian routines
+                    </span>
+                </div>
 
-            {/* Content Container */}
-            <div className="relative z-10 w-full px-6 pb-8 flex flex-col text-left">
-                
-                <p className="text-[18px] leading-[26px] font-medium mb-2 pr-4 animate-soft-rise animate-stagger-1">
-                    Your personal nutrition & fitness coach for Indian lifestyles.
+                <h1 className="max-w-[360px] text-[32px] font-semibold leading-[44px] tracking-normal text-base-white animate-soft-rise animate-stagger-1">
+                    Nutrition and fitness that adapts to your day.
+                </h1>
+
+                <p className="mt-4 max-w-[340px] text-[15px] leading-6 text-grey-200 animate-soft-rise animate-stagger-2">
+                    Plan meals, log progress, and keep workouts aligned with your body, goals, and schedule.
                 </p>
 
-                <p className="text-[14px] leading-[22px] text-grey-300 mb-8 max-w-[90%] animate-soft-rise animate-stagger-2">
-                    Personalized meals and workouts, built around your body and routine.
-                </p>
+                {/* <div className="mt-6 grid grid-cols-3 gap-2 animate-soft-rise animate-stagger-2">
+                    <div className="rounded-[18px] border border-base-white/10 bg-base-white/[0.07] px-3 py-3 backdrop-blur-md">
+                        <p className="text-[11px] font-semibold text-grey-400">Meals</p>
+                        <p className="mt-1 text-[13px] font-semibold text-base-white">AI plans</p>
+                    </div>
+                    <div className="rounded-[18px] border border-base-white/10 bg-base-white/[0.07] px-3 py-3 backdrop-blur-md">
+                        <p className="text-[11px] font-semibold text-grey-400">Workout</p>
+                        <p className="mt-1 text-[13px] font-semibold text-base-white">Daily fit</p>
+                    </div>
+                    <div className="rounded-[18px] border border-base-white/10 bg-base-white/[0.07] px-3 py-3 backdrop-blur-md">
+                        <p className="text-[11px] font-semibold text-grey-400">Progress</p>
+                        <p className="mt-1 text-[13px] font-semibold text-base-white">Tracked</p>
+                    </div>
+                </div> */}
 
-                {/* Actions */}
-                <div className="flex flex-col gap-3 w-full mt-4">
+                <div className="mt-7 flex flex-col gap-3 animate-soft-rise animate-stagger-3">
                     <button
+                        type="button"
+                        onClick={() => navigate("/signup")}
+                        className="flex h-[54px] w-full items-center justify-center rounded-full bg-accent-primary text-[15px] font-semibold text-base-white shadow-[0_16px_38px_rgba(11,95,255,0.36)] transition-all hover:bg-[#245fff] active:scale-[0.98]"
+                    >
+                        Create your plan
+                    </button>
+                    <button
+                        type="button"
                         onClick={() => navigate("/login")}
-                        className="w-full h-12 flex items-center justify-center bg-base-black/80 backdrop-blur-sm border border-grey-700/50 rounded-full text-[14px] leading-[20px] font-medium text-base-white transition-all hover:border-grey-600/70 hover:bg-base-black/90 active:scale-[0.98] active:opacity-70 animate-soft-rise animate-stagger-3"
+                        className="flex h-[52px] w-full items-center justify-center rounded-full border border-base-white/[0.14] bg-base-black/35 text-[15px] font-semibold text-base-white backdrop-blur-md transition-all active:scale-[0.98]"
                     >
                         Continue with Email
                     </button>
-
-                    {/* <button
-                        onClick={() => {
-                            // Google OAuth placeholder
-                            console.log("Google OAuth Placeholder");
-                        }}
-                        className="w-full h-12 flex items-center justify-center bg-base-white rounded-full text-[14px] leading-[20px] font-medium text-base-black transition-opacity active:opacity-70 shadow-card"
-                    >
-                        Continue with Google
-                    </button> */}
                 </div>
 
-                <p className="text-[11px] leading-[14px] text-grey-500 text-center mt-6 animate-soft-rise animate-stagger-3">
-                    We don't store any health data until onboarding is complete.
+                <p className="mt-5 text-center text-[11px] leading-4 text-grey-500 animate-soft-rise animate-stagger-3">
+                    Health details stay private and are only used to personalize your experience.
                 </p>
-            </div>
+            </main>
         </div>
     );
 };

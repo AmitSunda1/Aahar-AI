@@ -1,7 +1,13 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useForgotPasswordMutation } from "../../features/auth/authApi";
-import splashBg from "../../assets/Sign-up-img.webp";
+import { AuthCard, AuthShell } from "../../features/auth";
+
+const fieldClass =
+  "h-[52px] w-full rounded-[18px] border border-base-white/10 bg-base-white/[0.07] px-4 text-[15px] text-base-white placeholder:text-grey-500 outline-none transition-all focus:border-accent-primary/70 focus:bg-base-white/[0.1] focus:ring-4 focus:ring-accent-primary/15";
+
+const labelClass =
+  "mb-2 block text-[11px] font-semibold uppercase tracking-[0.16em] text-grey-400";
 
 const getApiErrorMessage = (error: unknown, fallback: string) => {
   if (!error || typeof error !== "object") {
@@ -24,7 +30,6 @@ const getApiErrorMessage = (error: unknown, fallback: string) => {
 };
 
 export const ForgotPassword = () => {
-  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [forgotPassword, { isLoading, error }] = useForgotPasswordMutation();
@@ -45,52 +50,26 @@ export const ForgotPassword = () => {
   );
 
   return (
-    <div className="relative flex flex-col items-center justify-end w-full h-screen min-h-screen text-base-white overflow-hidden bg-base-black">
-      {/* Header / Back Button */}
-      <div className="absolute top-0 left-0 w-full px-6 pt-12 z-20">
-        <button
-          onClick={() => navigate(-1)}
-          className="flex items-center gap-2 px-1 py-2 rounded-full bg-transparent text-base-white hover:text-grey-300 transition-all active:scale-[0.96] animate-soft-drop"
-        >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M19 12H5M12 19l-7-7 7-7"/>
-          </svg>
-          <span className="text-[15px] font-medium">Back</span>
-        </button>
-      </div>
-
-      <div className="absolute inset-0 w-full h-full z-0">
-        <img
-          src={splashBg}
-          alt="Fitness Background"
-          className="object-cover w-full h-full"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/10" />
-      </div>
-
-      <div className="w-full max-w-md p-6 bg-base-black/80 backdrop-blur-md rounded-card border border-grey-700 w-[90%] mx-auto mt-auto mb-12 shadow-card-lg relative z-10 animate-soft-rise">
-        <h2 className="mb-2 text-h2 font-bold text-center text-base-white">
-          Forgot Password
-        </h2>
-        <p className="mb-6 text-body-sm text-center text-grey-300">
-          Enter your verified email and we'll send you a reset link.
-        </p>
-
+    <AuthShell>
+      <AuthCard
+        title="Reset password"
+        subtitle="Enter your verified email and we will send a secure reset link."
+      >
         {submitted && (
-          <div className="p-3 mb-4 text-body-sm text-semantic-success bg-semantic-success/10 border border-semantic-success rounded-input animate-soft-rise">
+          <div className="mb-4 rounded-[18px] border border-semantic-success/[0.35] bg-semantic-success/[0.12] px-4 py-3 text-[13px] leading-5 text-semantic-success animate-soft-rise">
             Password reset link sent to your email.
           </div>
         )}
 
         {forgotPasswordError && (
-          <div className="p-3 mb-4 text-body-sm text-semantic-error bg-semantic-error/10 border border-semantic-error rounded-input animate-soft-rise">
+          <div className="mb-4 rounded-[18px] border border-semantic-error/[0.35] bg-semantic-error/[0.12] px-4 py-3 text-[13px] leading-5 text-semantic-error animate-soft-rise">
             {forgotPasswordError}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label className="block mb-1 text-label-sm text-grey-300 uppercase tracking-wider">
+            <label className={labelClass}>
               Email
             </label>
             <input
@@ -98,29 +77,29 @@ export const ForgotPassword = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full px-4 h-12 bg-base-black/50 border border-grey-700 rounded-input text-base-white placeholder-grey-500 focus:ring-1 focus:ring-accent-primary focus:border-accent-primary outline-none transition-all"
-              placeholder="Enter your email"
+              className={fieldClass}
+              placeholder="you@example.com"
             />
           </div>
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full h-12 mt-2 font-semibold text-[14px] leading-[20px] text-base-white bg-accent-primary rounded-full hover:bg-accent-primary/90 disabled:opacity-50 transition-all active:scale-[0.98] shadow-card-md"
+            className="h-[52px] w-full rounded-full bg-accent-primary text-[15px] font-semibold text-base-white shadow-[0_14px_34px_rgba(11,95,255,0.35)] transition-all hover:bg-[#245fff] disabled:cursor-not-allowed disabled:opacity-55 active:scale-[0.98]"
           >
             {isLoading ? "Sending..." : "Send Reset Link"}
           </button>
         </form>
 
-        <p className="mt-6 text-body-sm text-center text-grey-300">
+        <p className="mt-6 text-center text-[13px] leading-5 text-grey-300">
           Back to{" "}
           <Link
             to="/login"
-            className="text-base-white font-medium hover:underline"
+            className="font-semibold text-base-white transition-colors hover:text-accent-primary"
           >
-            Login
+            sign in
           </Link>
         </p>
-      </div>
-    </div>
+      </AuthCard>
+    </AuthShell>
   );
 };
