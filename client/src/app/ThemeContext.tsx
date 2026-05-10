@@ -11,6 +11,7 @@ type Theme = "dark" | "light";
 interface ThemeContextValue {
   theme: Theme;
   toggleTheme: () => void;
+  setTheme: (theme: Theme) => void;
   isDark: boolean;
 }
 
@@ -19,6 +20,7 @@ const STORAGE_KEY = "aahar:theme";
 const ThemeContext = createContext<ThemeContextValue>({
   theme: "dark",
   toggleTheme: () => {},
+  setTheme: () => {},
   isDark: true,
 });
 
@@ -65,7 +67,7 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
     setTheme((prev) => (prev === "dark" ? "light" : "dark"));
 
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme, isDark: theme === "dark" }}>
+    <ThemeContext.Provider value={{ theme, toggleTheme, setTheme, isDark: theme === "dark" }}>
       {children}
     </ThemeContext.Provider>
   );

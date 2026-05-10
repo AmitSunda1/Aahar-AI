@@ -108,7 +108,7 @@ type ProfileFormState = {
 };
 
 export const Profile = () => {
-  const { isDark } = useTheme();
+  const { isDark, setTheme } = useTheme();
   const navigate = useNavigate();
   const { data: meData, isLoading: isLoadingMe } = useGetMeQuery();
   const {
@@ -158,11 +158,20 @@ export const Profile = () => {
     ? "h-14 w-full rounded-card border border-grey-700/40 bg-grey-900 px-4 text-body-lg text-base-white outline-none transition-all focus:ring-2 focus:ring-inset focus:ring-accent-primary/50"
     : "h-14 w-full rounded-card border border-[#d8e2f0] bg-white px-4 text-body-lg text-[#1b2430] outline-none transition-all focus:ring-2 focus:ring-inset focus:ring-accent-primary/30";
 
+  const overlayBaseClass = isDark
+    ? "fixed inset-0 z-50 flex items-end justify-center bg-base-black/45 px-4 backdrop-blur-md animate-modal-overlay"
+    : "fixed inset-0 z-50 flex items-end justify-center bg-[#0f172a]/30 px-4 backdrop-blur-sm animate-modal-overlay";
+
+  const modalBaseClass = isDark
+    ? "relative w-full rounded-[30px] border border-base-white/10 bg-[linear-gradient(180deg,rgba(28,28,30,0.92),rgba(15,18,26,0.9))] p-5 shadow-card-lg backdrop-blur-xl animate-modal-sheet"
+    : "relative w-full rounded-[30px] border border-[#dce5f3] bg-white p-5 shadow-[0_24px_64px_rgba(15,23,42,0.12)] animate-modal-sheet";
+
   const isAnyModalOpen = activeModal !== null || isLogoutConfirmOpen;
 
   const handleLogout = async () => {
     try {
       await logout().unwrap();
+      setTheme("dark");
       navigate("/");
     } catch (err) {
       console.error("Logout failed:", err);
@@ -561,7 +570,7 @@ export const Profile = () => {
       </section>
 
       {activeModal === "profile" && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-base-black/45 px-4 backdrop-blur-md animate-modal-overlay">
+        <div className={overlayBaseClass}>
           <button
             type="button"
             aria-label="Close profile editor"
@@ -569,7 +578,7 @@ export const Profile = () => {
             onClick={() => setActiveModal(null)}
           />
 
-          <div className="relative w-full max-w-[520px] max-h-[90vh] overflow-hidden rounded-[30px] border border-base-white/10 bg-[linear-gradient(180deg,rgba(28,28,30,0.92),rgba(15,18,26,0.9))] p-5 py-3 my-auto shadow-card-lg backdrop-blur-xl animate-modal-sheet">
+          <div className={`${modalBaseClass} max-w-[520px] max-h-[90vh] overflow-hidden py-3 my-auto`}>
             <div className="mx-auto mb-4 h-1.5 w-14 rounded-full bg-grey-700/70" />
 
             <div className="mb-4 flex items-start justify-between gap-4">
@@ -852,7 +861,7 @@ export const Profile = () => {
               <Button
                 onClick={handleProfileSave}
                 loading={isSavingProfile}
-                className="w-full bg-accent-primary text-black hover:bg-accent-primary/90"
+                className="w-full bg-accent-primary text-white hover:bg-accent-primary/90"
               >
                 Save
               </Button>
@@ -862,7 +871,7 @@ export const Profile = () => {
       )}
 
       {activeModal === "password" && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-base-black/45 px-4 pb-6 pt-10 backdrop-blur-md animate-modal-overlay">
+        <div className={`${overlayBaseClass} pb-6 pt-10`}>
           <button
             type="button"
             aria-label="Close password modal"
@@ -870,7 +879,7 @@ export const Profile = () => {
             onClick={() => setActiveModal(null)}
           />
 
-          <div className="relative w-full max-w-[420px] rounded-[30px] border border-base-white/10 bg-[linear-gradient(180deg,rgba(28,28,30,0.92),rgba(15,18,26,0.9))] p-5 shadow-card-lg backdrop-blur-xl animate-modal-sheet">
+          <div className={`${modalBaseClass} max-w-[420px]`}>
             <div className="mx-auto mb-4 h-1.5 w-14 rounded-full bg-grey-700/70" />
 
             <div className="mb-4 flex items-start justify-between gap-4">
@@ -948,7 +957,7 @@ export const Profile = () => {
                 onClick={handleChangePassword}
                 loading={isChangingPassword}
                 fullWidth
-                className="mt-2 bg-white text-base-black hover:bg-accent-primary/90"
+                className="mt-2 bg-accent-primary text-white hover:bg-accent-primary/90"
               >
                 Change Password
               </Button>
@@ -963,7 +972,7 @@ export const Profile = () => {
       )}
 
       {isLogoutConfirmOpen && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-base-black/45 px-4 pb-6 pt-10 backdrop-blur-md animate-modal-overlay">
+        <div className={`${overlayBaseClass} pb-6 pt-10`}>
           <button
             type="button"
             aria-label="Close logout confirmation"
@@ -971,7 +980,7 @@ export const Profile = () => {
             onClick={() => setIsLogoutConfirmOpen(false)}
           />
 
-          <div className="relative w-full max-w-[420px] rounded-[30px] border border-base-white/10 bg-[linear-gradient(180deg,rgba(28,28,30,0.92),rgba(15,18,26,0.9))] p-5 shadow-card-lg backdrop-blur-xl animate-modal-sheet">
+          <div className={`${modalBaseClass} max-w-[420px]`}>
             <div className="mx-auto mb-4 h-1.5 w-14 rounded-full bg-grey-700/70" />
 
             <div className="flex items-start gap-4">

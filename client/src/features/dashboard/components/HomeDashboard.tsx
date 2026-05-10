@@ -60,7 +60,7 @@ const MacroRing = ({
     <div
       className={`flex min-w-0 flex-col items-center rounded-[22px] border px-2 py-4 ${surfaceClass}`}
     >
-      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+      <svg width="100%" height="auto" viewBox={`0 0 ${size} ${size}`} className="max-w-[84px] xs:max-w-[96px]">
         <circle
           cx={size / 2}
           cy={size / 2}
@@ -94,7 +94,7 @@ const MacroRing = ({
           x="50%"
           y="62%"
           textAnchor="middle"
-          className="fill-grey-500 text-[10px]"
+          className="fill-grey-500 text-[13px]"
         >
           /{target}g
         </text>
@@ -175,11 +175,11 @@ const WeightChart = ({
     plotted.length === 1
       ? `M${chartStartX.toFixed(2)},${plotted[0].y.toFixed(2)} L${chartEndX.toFixed(2)},${plotted[0].y.toFixed(2)}`
       : plotted
-          .map(
-            (pt, idx) =>
-              `${idx === 0 ? "M" : "L"}${pt.x.toFixed(2)},${pt.y.toFixed(2)}`,
-          )
-          .join(" ");
+        .map(
+          (pt, idx) =>
+            `${idx === 0 ? "M" : "L"}${pt.x.toFixed(2)},${pt.y.toFixed(2)}`,
+        )
+        .join(" ");
 
   const handleSaveWeight = async () => {
     setWeightError(null);
@@ -206,11 +206,10 @@ const WeightChart = ({
 
   return (
     <div
-      className={`rounded-[24px] p-4 shadow-card-md ${
-        isDark
-          ? `${DARK_CARD_BORDER_CLASS} shadow-[0_20px_44px_rgba(0,0,0,0.28)]`
-          : "border border-grey-700/50 bg-gradient-to-r from-grey-900/80 to-grey-900/40"
-      }`}
+      className={`rounded-[24px] p-4 shadow-card-md ${isDark
+        ? `${DARK_CARD_BORDER_CLASS} shadow-[0_20px_44px_rgba(0,0,0,0.28)]`
+        : "border border-grey-700/50 bg-gradient-to-r from-grey-900/80 to-grey-900/40"
+        }`}
     >
       <div className="mb-4 flex items-center justify-between">
         <h3 className="text-h3">Weight</h3>
@@ -458,7 +457,7 @@ const MealMacroPill = ({
   label: string;
   value: string;
 }) => (
-  <div className="rounded-full border border-base-white/10 bg-base-white/6 px-3 py-1.5">
+  <div className="rounded-[6px] border border-base-white/10 bg-base-white/6 px-3 py-1.5">
     <p className="text-[10px] uppercase tracking-[0.18em] text-grey-500">
       {label}
     </p>
@@ -483,11 +482,10 @@ const MealOptionCard = ({
 
   return (
     <div
-      className={`rounded-[20px] p-4 ${
-        featured
-          ? accentCardClass
-          : "border border-grey-700/45 bg-grey-900/55"
-      }`}
+      className={`rounded-[20px] p-4 ${featured
+        ? accentCardClass
+        : "border border-grey-700/45 bg-grey-900/55"
+        }`}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
@@ -505,7 +503,7 @@ const MealOptionCard = ({
         )}
       </div>
 
-      <div className="mt-3 grid grid-cols-4 gap-2">
+      <div className="mt-3 grid grid-cols-2 gap-2">
         <MealMacroPill label="Kcal" value={String(option.macros.calories)} />
         <MealMacroPill label="Protein" value={`${option.macros.protein}g`} />
         <MealMacroPill label="Carbs" value={`${option.macros.carbs}g`} />
@@ -623,7 +621,7 @@ export const HomeDashboard = () => {
         0,
         Math.round(
           ((d.caloriesEaten - d.caloriesBurned) / Math.max(1, d.calorieGoal)) *
-            100,
+          100,
         ),
       ),
     );
@@ -974,90 +972,90 @@ export const HomeDashboard = () => {
           </div>
         </div>
         <div className="grid grid-cols-2 items-stretch gap-3">
-        <div className={`flex min-h-[198px] flex-col rounded-[24px] border p-4 shadow-card ${activityCardClass}`}>
-          <p className="text-[15px] font-semibold text-grey-300">Steps</p>
-          <p className="mt-2 text-[28px] leading-[32px] font-semibold">
-            {d.stepCount}
-          </p>
-          <p className="text-caption text-grey-500">
-            Goal: {d.stepGoal.toLocaleString()} steps
-          </p>
-          <div className="mt-5 h-2 rounded-full bg-grey-700/45">
-            <div
-              className="h-full rounded-full bg-accent-primary"
-              style={{
-                width: `${Math.min(100, (d.stepCount / Math.max(1, d.stepGoal)) * 100)}%`,
-                backgroundColor: FILL_COLOR,
-                transition: "width 700ms ease",
-              }}
-            />
-          </div>
+          <div className={`flex min-h-[198px] flex-col rounded-[24px] border p-4 shadow-card ${activityCardClass}`}>
+            <p className="text-[15px] font-semibold text-grey-300">Steps</p>
+            <p className="mt-2 text-[28px] leading-[32px] font-semibold">
+              {d.stepCount}
+            </p>
+            <p className="text-caption text-grey-500">
+              Goal: {d.stepGoal.toLocaleString()} steps
+            </p>
+            <div className="mt-5 h-2 rounded-full bg-grey-700/45">
+              <div
+                className="h-full rounded-full bg-accent-primary"
+                style={{
+                  width: `${Math.min(100, (d.stepCount / Math.max(1, d.stepGoal)) * 100)}%`,
+                  backgroundColor: FILL_COLOR,
+                  transition: "width 700ms ease",
+                }}
+              />
+            </div>
 
-          <div className="mt-auto pt-2">
-            {isStepLogOpen ? (
-              <div className="space-y-3">
-                <input
-                  type="number"
-                  min="1"
-                  value={stepsToLog}
-                  onChange={(event) => setStepsToLog(event.target.value)}
-                  placeholder="Enter steps"
-                  className="h-11 w-full rounded-[12px] border border-grey-700/50 bg-grey-900/60 px-3 text-body text-base-white placeholder-grey-500 outline-none focus:border-accent-primary"
-                />
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsStepLogOpen(false);
-                      setStepsToLog("");
-                    }}
-                    className="h-10 rounded-full border border-grey-700/60 text-body text-grey-300"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleLogSteps}
-                    disabled={isUpdatingProgress}
-                    className="h-10 rounded-full bg-accent-primary text-body font-semibold text-base-white disabled:bg-grey-700/50 disabled:text-grey-500"
-                  >
-                    {isUpdatingProgress ? "Saving..." : "Log"}
-                  </button>
+            <div className="mt-auto pt-2">
+              {isStepLogOpen ? (
+                <div className="space-y-3">
+                  <input
+                    type="number"
+                    min="1"
+                    value={stepsToLog}
+                    onChange={(event) => setStepsToLog(event.target.value)}
+                    placeholder="Enter steps"
+                    className="h-11 w-full rounded-[12px] border border-grey-700/50 bg-grey-900/60 px-3 text-body text-base-white placeholder-grey-500 outline-none focus:border-accent-primary"
+                  />
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsStepLogOpen(false);
+                        setStepsToLog("");
+                      }}
+                      className="h-10 rounded-full border border-grey-700/60 text-body text-grey-300"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleLogSteps}
+                      disabled={isUpdatingProgress}
+                      className="h-10 rounded-full bg-accent-primary text-body font-semibold text-base-white disabled:bg-grey-700/50 disabled:text-grey-500"
+                    >
+                      {isUpdatingProgress ? "Saving..." : "Log"}
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ) : (
-              <button
-                type="button"
-                onClick={() => setIsStepLogOpen(true)}
-                className="h-11 w-full rounded-full border border-accent-primary/60 bg-accent-primary/10 text-body font-semibold text-accent-primary transition-colors hover:bg-accent-primary/15"
-              >
-                Log steps
-              </button>
-            )}
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setIsStepLogOpen(true)}
+                  className="h-11 w-full rounded-full border border-accent-primary/60 bg-accent-primary/10 text-body font-semibold text-accent-primary transition-colors hover:bg-accent-primary/15"
+                >
+                  Log steps
+                </button>
+              )}
+            </div>
           </div>
-        </div>
 
-        <div className={`flex min-h-[198px] flex-col rounded-[24px] border p-4 shadow-card ${activityCardClass}`}>
-          <p className="text-[15px] font-semibold text-grey-300">Exercise</p>
-          <p className="mt-2 text-[28px] leading-[32px] font-semibold">
-            {d.exerciseCalories} kcal
-          </p>
-          <p className="text-caption text-grey-500">
-            {String(Math.floor(d.exerciseDurationMinutes / 60)).padStart(
-              2,
-              "0",
-            )}
-            :{String(d.exerciseDurationMinutes % 60).padStart(2, "0")} hr
-          </p>
+          <div className={`flex min-h-[198px] flex-col rounded-[24px] border p-4 shadow-card ${activityCardClass}`}>
+            <p className="text-[15px] font-semibold text-grey-300">Exercise</p>
+            <p className="mt-2 text-[28px] leading-[32px] font-semibold">
+              {d.exerciseCalories} kcal
+            </p>
+            <p className="text-caption text-grey-500">
+              {String(Math.floor(d.exerciseDurationMinutes / 60)).padStart(
+                2,
+                "0",
+              )}
+              :{String(d.exerciseDurationMinutes % 60).padStart(2, "0")} hr
+            </p>
 
-          <button
-            type="button"
-            onClick={() => navigate("/workout")}
-            className="mt-auto h-11 w-full rounded-full border border-accent-primary/50 bg-accent-primary/10 text-[30px] leading-none text-accent-primary transition-colors hover:bg-accent-primary/15"
-          >
-            +
-          </button>
-        </div>
+            <button
+              type="button"
+              onClick={() => navigate("/workout")}
+              className="mt-auto h-11 w-full rounded-full border border-accent-primary/50 bg-accent-primary/10 text-[30px] leading-none text-accent-primary transition-colors hover:bg-accent-primary/15"
+            >
+              +
+            </button>
+          </div>
         </div>
       </RevealSection>
 
@@ -1121,7 +1119,7 @@ export const HomeDashboard = () => {
                 </div>
               </div> */}
 
-              <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 scrollbar-hide">
+              <div className="-mx-1 flex gap-1 overflow-x-auto px-1 pb-1 scrollbar-hide">
                 {todayPlan.meals.map((meal, mealIdx) => {
                   const isActive = mealIdx === selectedMealIndex;
 
@@ -1130,11 +1128,10 @@ export const HomeDashboard = () => {
                       key={`${todayPlan.dayNumber}-${meal.mealType}-${mealIdx}`}
                       type="button"
                       onClick={() => setSelectedMealIndex(mealIdx)}
-                      className={`shrink-0 rounded-full border px-4 py-2 text-label-sm transition-all duration-200 ${
-                        isActive
-                          ? `${mealTabAccentClass} shadow-[0_8px_20px_rgba(0,0,0,0.18)]`
-                          : "bg-base-white/6 text-grey-300 hover:bg-base-white/10"
-                      }`}
+                      className={`shrink-0 rounded-full border px-4 py-2 text-label-sm transition-all duration-200 ${isActive
+                        ? `${mealTabAccentClass} shadow-[0_8px_20px_rgba(0,0,0,0.18)]`
+                        : "bg-base-white/6 text-grey-300 hover:bg-base-white/10"
+                        }`}
                     >
                       {formatMealType(meal.mealType)}
                     </button>
@@ -1151,7 +1148,7 @@ export const HomeDashboard = () => {
 
               <div className="grid grid-cols-2 gap-3">
                 <div className={`rounded-[20px] p-4 ${planNoteClass}`}>
-                  <p className="text-caption uppercase tracking-[0.18em] text-black">
+                  <p className="text-caption uppercase tracking-[0.18em] text-base-white">
                     Daily Habit
                   </p>
                   <p className="mt-2 text-body text-grey-300">
@@ -1160,7 +1157,7 @@ export const HomeDashboard = () => {
                 </div>
 
                 <div className={`rounded-[20px] p-4 ${planNoteClass}`}>
-                  <p className="text-caption uppercase tracking-[0.18em] text-black">
+                  <p className="text-caption uppercase tracking-[0.18em] text-base-white">
                     Workout
                   </p>
                   <p className="mt-2 text-body text-grey-300">
