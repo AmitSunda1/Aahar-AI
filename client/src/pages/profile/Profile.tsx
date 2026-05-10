@@ -35,6 +35,37 @@ const DIETARY_OPTIONS = [
   "soy_free",
 ] as const;
 
+const LogoutIcon = ({ className = "" }: { className?: string }) => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    aria-hidden="true"
+    className={className}
+  >
+    <path
+      d="M14 7L19 12L14 17"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M19 12H9"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M11 5H7.8C6.11984 5 5.27976 5 4.63803 5.32698C4.07354 5.6146 3.6146 6.07354 3.32698 6.63803C3 7.27976 3 8.11984 3 9.8V14.2C3 15.8802 3 16.7202 3.32698 17.362C3.6146 17.9265 4.07354 18.3854 4.63803 18.673C5.27976 19 6.11984 19 7.8 19H11"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+
 type ProfileFormState = {
   name: string;
   gender: "male" | "female" | "other";
@@ -124,6 +155,17 @@ export const Profile = () => {
       medicalConditionsRaw: (user.medicalConditions ?? []).join(", "),
     });
   }, [user]);
+
+  useEffect(() => {
+    if (!isLogoutConfirmOpen) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [isLogoutConfirmOpen]);
 
   const handleChangePassword = async () => {
     setPasswordError(null);
@@ -783,8 +825,9 @@ export const Profile = () => {
         <button
           onClick={() => setIsLogoutConfirmOpen(true)}
           disabled={isLoggingOut}
-          className="mt-5 h-12 w-full rounded-full border border-grey-700/50 bg-grey-900/65 text-body font-semibold text-grey-300 transition-colors hover:border-semantic-error/35 hover:bg-semantic-error/10 hover:text-semantic-error disabled:opacity-50"
+          className="mt-5 flex h-12 w-full items-center justify-center gap-2 rounded-full border border-semantic-error/35 bg-semantic-error/10 text-body font-semibold text-semantic-error transition-colors hover:bg-semantic-error/16 disabled:opacity-50"
         >
+          <LogoutIcon className="h-6 w-6" />
           {isLoggingOut ? "Logging out..." : "Logout"}
         </button>
       </section>
@@ -802,8 +845,8 @@ export const Profile = () => {
             <div className="mx-auto mb-4 h-1.5 w-14 rounded-full bg-grey-700/70" />
 
             <div className="flex items-start gap-4">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-semantic-error/25 bg-semantic-error/10 text-body-lg font-semibold text-semantic-error">
-                !
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-semantic-error/25 bg-semantic-error/10 text-semantic-error">
+                <LogoutIcon className="h-6 w-6" />
               </div>
 
               <div>
@@ -830,8 +873,9 @@ export const Profile = () => {
                   setIsLogoutConfirmOpen(false);
                 }}
                 disabled={isLoggingOut}
-                className="h-14 w-full rounded-card border border-semantic-error/25 bg-semantic-error/12 px-6 text-body-lg font-semibold text-semantic-error transition-colors hover:bg-semantic-error/18 disabled:opacity-50"
+                className="flex h-14 w-full items-center justify-center gap-2 rounded-card border border-semantic-error/25 bg-semantic-error/12 px-6 text-body-lg font-semibold text-semantic-error transition-colors hover:bg-semantic-error/18 disabled:opacity-50"
               >
+                <LogoutIcon className="h-4.5 w-4.5" />
                 {isLoggingOut ? "Logging out..." : "Logout"}
               </button>
             </div>

@@ -12,6 +12,8 @@ import {
 import type {
   // DashboardInsight,
   // UpdateTodayProgressRequest,
+  DayMeal,
+  MealOption,
   WeightPoint,
 } from "../dashboard.types";
 
@@ -439,6 +441,186 @@ const RecommendationList = ({
   );
 };
 
+const formatMealType = (mealType: DayMeal["mealType"]) =>
+  mealType
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+
+const getMealAccent = (mealType: DayMeal["mealType"]) => {
+  switch (mealType) {
+    case "breakfast":
+      return {
+        chip: "border-[#f6b34d]/30 bg-[#f6b34d]/12 text-[#ffd38c]",
+        card:
+          "border-[#f6b34d]/20 bg-[linear-gradient(180deg,rgba(246,179,77,0.11),rgba(28,28,30,0.88))]",
+      };
+    case "lunch":
+      return {
+        chip: "border-[#57c785]/30 bg-[#57c785]/12 text-[#95f0b6]",
+        card:
+          "border-[#57c785]/20 bg-[linear-gradient(180deg,rgba(87,199,133,0.10),rgba(28,28,30,0.88))]",
+      };
+    case "dinner":
+      return {
+        chip: "border-[#ff8a5b]/30 bg-[#ff8a5b]/12 text-[#ffc0a8]",
+        card:
+          "border-[#ff8a5b]/20 bg-[linear-gradient(180deg,rgba(255,138,91,0.11),rgba(28,28,30,0.88))]",
+      };
+    default:
+      return {
+        chip: "border-accent-primary/25 bg-accent-primary/10 text-accent-primary",
+        card:
+          "border-accent-primary/20 bg-[linear-gradient(180deg,rgba(11,95,255,0.11),rgba(28,28,30,0.88))]",
+      };
+  }
+};
+
+const formatTag = (tag: string) =>
+  tag.replace(/_/g, " ").replace(/\b\w/g, (char) => char.toUpperCase());
+
+const MealMacroPill = ({
+  label,
+  value,
+}: {
+  label: string;
+  value: string;
+}) => (
+  <div className="rounded-full border border-base-white/10 bg-base-white/6 px-3 py-1.5">
+    <p className="text-[10px] uppercase tracking-[0.18em] text-grey-500">
+      {label}
+    </p>
+    <p className="mt-1 text-label-lg text-base-white">{value}</p>
+  </div>
+);
+
+const MealOptionCard = ({
+  option,
+  featured = false,
+  accentCardClass = "",
+}: {
+  option: MealOption;
+  featured?: boolean;
+  accentCardClass?: string;
+}) => {
+  const ingredientPreview = option.ingredients
+    .slice(0, 3)
+    .map((ingredient) => ingredient.item)
+    .filter(Boolean)
+    .join(" • ");
+
+  return (
+    <div
+      className={`rounded-[20px] border p-4 ${
+        featured
+          ? accentCardClass
+          : "border-grey-700/45 bg-grey-900/55"
+      }`}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-h3 text-base-white">{option.name}</p>
+          {ingredientPreview && (
+            <p className="mt-1 line-clamp-2 text-body text-grey-400">
+              {ingredientPreview}
+            </p>
+          )}
+        </div>
+        {featured && (
+          <span className="shrink-0 rounded-full border border-accent-primary/20 bg-accent-primary/12 px-3 py-1 text-[10px] uppercase tracking-[0.18em] text-accent-primary">
+            Best pick
+          </span>
+        )}
+      </div>
+
+      <div className="mt-3 grid grid-cols-4 gap-2">
+        <MealMacroPill label="Kcal" value={String(option.macros.calories)} />
+        <MealMacroPill label="Protein" value={`${option.macros.protein}g`} />
+        <MealMacroPill label="Carbs" value={`${option.macros.carbs}g`} />
+        <MealMacroPill label="Fat" value={`${option.macros.fat}g`} />
+      </div>
+
+      {option.dietaryTags.length > 0 && (
+        <div className="mt-3 flex flex-wrap gap-2">
+          {option.dietaryTags.slice(0, 3).map((tag) => (
+            <span
+              key={tag}
+              className="rounded-full border border-grey-700/40 bg-grey-900/65 px-2.5 py-1 text-caption text-grey-300"
+            >
+              {formatTag(tag)}
+            </span>
+          ))}
+        </div>
+      )}
+
+      {option.prepNote && (
+        <p className="mt-3 text-caption text-grey-500">{option.prepNote}</p>
+      )}
+    </div>
+  );
+};
+
+const MealPlanCard = ({ meal }: { meal: DayMeal }) => {
+  const [featuredOption, ...alternateOptions] = meal.options;
+  const [isVisible, setIsVisible] = useState(false);
+  const accent = getMealAccent(meal.mealType);
+
+  useEffect(() => {
+    setIsVisible(false);
+    const frame = window.requestAnimationFrame(() => {
+      setIsVisible(true);
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [meal.mealType]);
+
+  return (
+    <div
+      className="rounded-[24px] border border-grey-700/45 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(10,10,14,0.28))] p-4"
+      style={{
+        opacity: isVisible ? 1 : 0,
+        transform: isVisible ? "translateY(0px)" : "translateY(10px)",
+        transition: "opacity 220ms ease, transform 260ms ease",
+      }}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-[11px] uppercase tracking-[0.22em] text-grey-500">
+            {formatMealType(meal.mealType)}
+          </p>
+          <p className="mt-1 text-body text-grey-400">{meal.timingNote}</p>
+        </div>
+        <div className={`rounded-full border px-3 py-1.5 text-caption ${accent.chip}`}>
+          {meal.targetMacros.calories} kcal target
+        </div>
+      </div>
+
+      <div className="mt-4 space-y-3">
+        {featuredOption && (
+          <MealOptionCard
+            option={featuredOption}
+            featured
+            accentCardClass={accent.card}
+          />
+        )}
+
+        {alternateOptions.length > 0 && (
+          <div className="space-y-2">
+            <p className="text-caption uppercase tracking-[0.18em] text-grey-500">
+              Alternate options
+            </p>
+            {alternateOptions.slice(0, 1).map((option, index) => (
+              <MealOptionCard
+                key={`${meal.mealType}-${option.name}-${index}`}
+                option={option}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 export const HomeDashboard = () => {
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
@@ -451,6 +633,7 @@ export const HomeDashboard = () => {
   const [isStepLogOpen, setIsStepLogOpen] = useState(false);
   const [stepsToLog, setStepsToLog] = useState("");
   const [animatedKcalProgress, setAnimatedKcalProgress] = useState(0);
+  const [selectedMealIndex, setSelectedMealIndex] = useState(0);
 
   const lastGeneratedLabel = useMemo(() => {
     if (!data?.meta?.lastPlanGeneratedAt) return "Not generated yet";
@@ -575,6 +758,8 @@ export const HomeDashboard = () => {
   const todayPlan =
     d.weeklyMealPlan?.days.find((day) => day.dayNumber === todayIsoDay) ??
     d.weeklyMealPlan?.days[0];
+  const selectedMeal =
+    todayPlan?.meals[selectedMealIndex] ?? todayPlan?.meals[0] ?? null;
   const user = meData?.data?.user;
   const hour = new Date().getHours();
   const greetingPrefix =
@@ -584,6 +769,10 @@ export const HomeDashboard = () => {
     user?.email?.split("@")[0] ||
     d.greetingTitle ||
     "there";
+
+  useEffect(() => {
+    setSelectedMealIndex(0);
+  }, [todayPlan?.dayNumber]);
   // const planSourceLabel =
   //   meta.mealPlanSource === "gemini"
   //     ? "Gemini suggestion"
@@ -839,67 +1028,110 @@ export const HomeDashboard = () => {
       </RevealSection>
 
       <RevealSection className="mt-7" delay={180}>
-        <div className="mb-4 rounded-[20px] border border-grey-700/50 bg-grey-900/40 p-4">
-          <h2 className="text-h2">Today's Plan</h2>
-          <p className="mt-1 text-body text-grey-500">
-            Refreshed every 7 days from your onboarding profile and goal. Last
-            refresh: {lastGeneratedLabel}
-          </p>
+        <div className="mb-4 rounded-[26px] border border-grey-700/50 bg-[radial-gradient(circle_at_top_left,rgba(11,95,255,0.15),rgba(28,28,30,0.92)_42%,rgba(14,14,18,0.98)_100%)] p-5 shadow-card-md">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-label-sm uppercase tracking-[0.2em] text-accent-primary/80">
+                Today's Plan
+              </p>
+              <h2 className="mt-2 text-h2">
+                {todayPlan ? `${todayPlan.dayLabel} menu` : "Fresh ideas for today"}
+              </h2>
+              <p className="mt-1 max-w-[30ch] text-body text-grey-400">
+                {todayPlan
+                  ? "A cleaner, hunger-inducing view of your next meals, built around your targets."
+                  : "Refreshed every 7 days from your onboarding profile and goal."}
+              </p>
+            </div>
+            <div className="rounded-full border border-base-white/10 bg-base-white/6 px-3 py-1.5 text-caption text-grey-300">
+              Updated {lastGeneratedLabel}
+            </div>
+          </div>
 
           {todayPlan ? (
-            <div className="mt-4 space-y-4 rounded-[12px]">
-              <div>
-                <p className=" text-h3 uppercase text-grey-400">
-                  Day: {todayPlan.dayLabel}
-                </p>
-                {/* <p className="mt-1 text-h3 text-base-white">
-                  {todayPlan.dayLabel}
-                </p> */}
-              </div>
-
-              {todayPlan.meals.map((meal, mealIdx) => (
-                <div key={`${todayPlan.dayNumber}-${mealIdx}`}>
-                  <p className="text-label-lg uppercase text-grey-400">
-                    {meal.mealType.replace(/_/g, " ")}
-                  </p>
-                  <p className="mt-1 text-body text-grey-500">
-                    {meal.timingNote}
-                  </p>
-                  <div className="mt-2 space-y-2">
-                    {meal.options.slice(0, 2).map((option, optIdx) => (
-                      <div
-                        key={`${todayPlan.dayNumber}-${mealIdx}-${optIdx}`}
-                        className="rounded-[10px] border border-accent-primary/20 bg-accent-primary/5 p-3"
-                      >
-                        <p className="font-medium text-base-white">
-                          {option.name}
-                        </p>
-                        <p className="mt-2 text-caption text-grey-500">
-                          {option.macros.calories} kcal •{" "}
-                          {option.macros.protein}g protein •{" "}
-                          {option.macros.carbs}g carbs • {option.macros.fat}g
-                          fat
-                        </p>
-                      </div>
-                    ))}
+            <div className="mt-5 space-y-4">
+              <div className="rounded-[22px] border border-base-white/10 bg-base-white/5 p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-caption uppercase tracking-[0.18em] text-grey-500">
+                      Daily focus
+                    </p>
+                    <p className="mt-1 text-body-lg text-base-white">
+                      {d.planSummary}
+                    </p>
+                  </div>
+                  <div className="rounded-full border border-accent-primary/18 bg-accent-primary/10 px-3 py-1.5 text-caption text-accent-primary">
+                    {todayPlan.meals.length} meals
                   </div>
                 </div>
-              ))}
 
-              <div className="border-t border-grey-700/30 pt-3">
-                <p className="text-label-sm uppercase text-grey-500">
-                  Daily Habit
-                </p>
-                <p className="mt-1 text-body text-grey-300">
-                  {todayPlan.habitNote}
-                </p>
+                <div className="mt-4 grid grid-cols-4 gap-2">
+                  <MealMacroPill
+                    label="Kcal"
+                    value={String(todayPlan.dailyTargets.calories)}
+                  />
+                  <MealMacroPill
+                    label="Protein"
+                    value={`${todayPlan.dailyTargets.protein}g`}
+                  />
+                  <MealMacroPill
+                    label="Carbs"
+                    value={`${todayPlan.dailyTargets.carbs}g`}
+                  />
+                  <MealMacroPill
+                    label="Fat"
+                    value={`${todayPlan.dailyTargets.fat}g`}
+                  />
+                </div>
               </div>
 
-              <div className="border-t border-grey-700/30 pt-3">
-                <p className="text-label-sm uppercase text-grey-500">Workout</p>
-                <p className="mt-1 text-body text-grey-300">
-                  {todayPlan.workoutNote}
-                </p>
+              <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 scrollbar-hide">
+                {todayPlan.meals.map((meal, mealIdx) => {
+                  const isActive = mealIdx === selectedMealIndex;
+                  const accent = getMealAccent(meal.mealType);
+
+                  return (
+                    <button
+                      key={`${todayPlan.dayNumber}-${meal.mealType}-${mealIdx}`}
+                      type="button"
+                      onClick={() => setSelectedMealIndex(mealIdx)}
+                      className={`shrink-0 rounded-full border px-4 py-2 text-label-sm transition-all duration-200 ${
+                        isActive
+                          ? `${accent.chip} shadow-[0_8px_20px_rgba(0,0,0,0.18)]`
+                          : "border-grey-700/50 bg-grey-900/55 text-grey-300 hover:border-grey-500/70 hover:bg-grey-900/75"
+                      }`}
+                    >
+                      {formatMealType(meal.mealType)}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {selectedMeal && (
+                <MealPlanCard
+                  key={`${todayPlan.dayNumber}-${selectedMeal.mealType}-${selectedMealIndex}`}
+                  meal={selectedMeal}
+                />
+              )}
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="rounded-[22px] border border-grey-700/45 bg-grey-900/50 p-4">
+                  <p className="text-caption uppercase tracking-[0.18em] text-grey-500">
+                    Daily Habit
+                  </p>
+                  <p className="mt-2 text-body text-grey-300">
+                    {todayPlan.habitNote}
+                  </p>
+                </div>
+
+                <div className="rounded-[22px] border border-grey-700/45 bg-grey-900/50 p-4">
+                  <p className="text-caption uppercase tracking-[0.18em] text-grey-500">
+                    Workout
+                  </p>
+                  <p className="mt-2 text-body text-grey-300">
+                    {todayPlan.workoutNote}
+                  </p>
+                </div>
               </div>
             </div>
           ) : (

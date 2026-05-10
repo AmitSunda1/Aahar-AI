@@ -1,17 +1,20 @@
 import { useNavigate } from "react-router-dom";
 import splashBg from "../assets/Sign-up-img.webp";
+import splashlogo from "../assets/Splash-logo.webp";
+
 
 export const Splash = () => {
     const navigate = useNavigate();
 
     return (
         <div className="relative flex flex-col items-center justify-end w-full h-screen min-h-screen text-base-white overflow-hidden bg-base-black">
-            {/* Header / Logo Placeholder */}
-            <div className="absolute top-0 left-0 w-full px-6 pt-12 z-20 flex items-center">
-                {/* Replace this div with an <img src={logo} ... /> later */}
-                <div className="text-[22px] font-bold tracking-widest text-base-white">
-                    AAHAR AI
-                </div>
+            {/* Header / Logo */}
+            <div className="absolute -top-7 left-0 w-full px-6 pt-12 z-20 flex items-center">
+                <img
+                    src={splashlogo}
+                    alt="Aahar AI"
+                    className="h-23 w-auto object-contain"
+                />
             </div>
 
             {/* Background Image with Gradient Overlay */}
