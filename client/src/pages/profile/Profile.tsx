@@ -62,6 +62,7 @@ export const Profile = () => {
 
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [isPasswordOpen, setIsPasswordOpen] = useState(false);
+  const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
   const [profileError, setProfileError] = useState<string | null>(null);
   const [profileSuccess, setProfileSuccess] = useState<string | null>(null);
   const [currentPassword, setCurrentPassword] = useState("");
@@ -84,10 +85,17 @@ export const Profile = () => {
     medicalConditionsRaw: "",
   });
 
+  const sectionCardClass =
+    "rounded-[28px] border border-grey-700/40 bg-gradient-to-br from-grey-900 via-grey-900/95 to-[#10131c] p-5 shadow-card-lg";
+  const mutedPanelClass =
+    "rounded-[22px] border border-grey-700/30 bg-grey-900/45 p-4";
+  const selectClass =
+    "h-14 w-full rounded-card border border-grey-700/40 bg-grey-900 px-4 text-body-lg text-base-white outline-none transition-all focus:ring-2 focus:ring-inset focus:ring-accent-primary/50";
+
   const handleLogout = async () => {
     try {
       await logout().unwrap();
-      navigate("/login");
+      navigate("/");
     } catch (err) {
       console.error("Logout failed:", err);
     }
@@ -218,7 +226,6 @@ export const Profile = () => {
 
   if (isLoadingMe) return <Loader />;
 
-  // Generate avatar initials
   const getInitials = () => {
     if (user?.name) {
       return user.name
@@ -231,188 +238,219 @@ export const Profile = () => {
     return user?.email?.[0]?.toUpperCase() || "U";
   };
 
+  const formatLabel = (value: string) =>
+    value.replace(/_/g, " ").replace(/\b\w/g, (char) => char.toUpperCase());
+
+  const profileItems = [
+    { label: "Gender", value: user?.gender ? formatLabel(user.gender) : "Not set" },
+    { label: "Age", value: user?.age ? `${user.age} years` : "Not set" },
+    {
+      label: "Height",
+      value: user?.height ? `${user.height.value} ${user.height.unit}` : "Not set",
+    },
+    {
+      label: "Weight",
+      value: user?.weight ? `${user.weight.value} ${user.weight.unit}` : "Not set",
+    },
+    {
+      label: "Current Weight",
+      value:
+        typeof currentWeightKg === "number" ? `${currentWeightKg} kg` : "Not logged",
+    },
+    { label: "Goal", value: user?.goal ? formatLabel(user.goal) : "Not set" },
+    {
+      label: "Activity",
+      value: user?.activityLevel ? formatLabel(user.activityLevel) : "Not set",
+    },
+    {
+      label: "Daily Steps",
+      value:
+        typeof user?.dailySteps === "number"
+          ? `${user.dailySteps.toLocaleString()} steps`
+          : "Not set",
+    },
+  ];
+
+  const dietaryItems = user?.dietaryPreferences?.length
+    ? user.dietaryPreferences.map(formatLabel)
+    : [];
+  const medicalItems = user?.medicalConditions?.length
+    ? user.medicalConditions
+    : [];
+
   return (
-    <div className="min-h-screen bg-base-black px-4 pb-8 pt-6 text-base-white">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-h1">Profile</h1>
-        <p className="mt-1 text-body text-grey-500">
-          Manage your account settings and personal information
+    <div className="min-h-screen bg-base-black px-4 pb-safe pb-8 pt-5 text-base-white">
+      <div className="mb-5">
+        <p className="text-label-sm uppercase tracking-[0.24em] text-accent-primary/80">
+          Account
+        </p>
+        <h1 className="mt-2 text-h1">Profile</h1>
+        <p className="mt-1 max-w-[28ch] text-body text-grey-500">
+          A clean view of your identity, plan settings, and account security.
         </p>
       </div>
 
-      {/* User Profile Card */}
-      <section className="mb-8 rounded-[28px] border border-grey-700/50 bg-[radial-gradient(circle_at_top_left,rgba(11,95,255,0.22),rgba(9,9,13,0.2)_38%,rgba(9,9,13,0.9)_100%)] p-6 shadow-card-lg">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <section className="mb-5 rounded-[32px] border border-accent-primary/20 bg-[radial-gradient(circle_at_top_left,rgba(11,95,255,0.26),rgba(13,16,24,0.96)_38%,rgba(11,11,11,1)_100%)] p-5 shadow-card-lg">
+        <div className="flex items-start justify-between gap-3">
           <div className="flex min-w-0 items-center gap-4">
-            {/* Avatar */}
-            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-accent-primary/20 border border-accent-primary/40">
-              <span className="text-[32px] font-semibold text-accent-primary">
+            <div className="flex h-[72px] w-[72px] shrink-0 items-center justify-center rounded-[26px] border border-accent-primary/30 bg-accent-primary/12 backdrop-blur-sm">
+              <span className="text-[26px] font-semibold tracking-[0.06em] text-accent-primary">
                 {getInitials()}
               </span>
             </div>
 
-            {/* User Info */}
             <div className="min-w-0">
-              <h2 className="text-h2">{user?.name || "User"}</h2>
-              <p className="mt-1 truncate text-body text-grey-400">
-                {user?.email}
+              <p className="text-caption uppercase tracking-[0.2em] text-grey-400">
+                Member
               </p>
-              <p className="mt-2 inline-flex rounded-full border border-accent-primary/30 bg-accent-primary/10 px-3 py-1 text-label-sm text-accent-primary">
-                {user?.isEmailVerified ? "✓ Verified" : "Pending verification"}
-              </p>
+              <h2 className="mt-1 truncate text-h2">{user?.name || "User"}</h2>
+              <p className="mt-1 truncate text-body text-grey-400">{user?.email}</p>
             </div>
           </div>
 
-          <button
-            onClick={handleLogout}
-            disabled={isLoggingOut}
-            className="h-12 w-full shrink-0 rounded-full border border-semantic-error/40 bg-semantic-error/10 px-5 font-semibold text-semantic-error transition-colors hover:bg-semantic-error/20 disabled:opacity-50 sm:w-auto"
-          >
-            {isLoggingOut ? "..." : "Logout"}
-          </button>
+          <div className="shrink-0 rounded-full border border-grey-700/40 bg-grey-900/40 px-3 py-1.5 text-caption text-grey-300">
+            {user?.isEmailVerified ? "Verified" : "Pending"}
+          </div>
         </div>
-      </section>
 
-      {/* Personal Information Section */}
-      <section className="mb-8 rounded-[26px] border border-grey-700/50 bg-gradient-to-r from-grey-900/80 to-grey-900/30 p-6 shadow-card-lg">
-        <div className="mb-6 flex items-center justify-between">
-          <div>
-            <h2 className="text-h2">Personal Information</h2>
-            <p className="mt-1 text-body text-grey-500">
-              10 onboarding fields used for your plan and dashboard
+        <div className="mt-5 grid grid-cols-2 gap-3">
+          <div className="rounded-[22px] border border-base-white/8 bg-base-white/6 p-4 backdrop-blur-sm">
+            <p className="text-caption uppercase tracking-[0.16em] text-grey-400">
+              Dashboard Weight
+            </p>
+            <p className="mt-2 text-[24px] font-semibold leading-[28px]">
+              {typeof currentWeightKg === "number" ? `${currentWeightKg} kg` : "--"}
             </p>
           </div>
+          <div className="rounded-[22px] border border-base-white/8 bg-base-white/6 p-4 backdrop-blur-sm">
+            <p className="text-caption uppercase tracking-[0.16em] text-grey-400">
+              Daily Steps
+            </p>
+            <p className="mt-2 text-[24px] font-semibold leading-[28px]">
+              {typeof user?.dailySteps === "number"
+                ? user.dailySteps.toLocaleString()
+                : "--"}
+            </p>
+          </div>
+        </div>
+
+        
+      </section>
+
+      <section className={`${sectionCardClass} mb-5`}>
+        <div className="mb-5 flex items-start justify-between gap-3">
+          <div>
+            <p className="text-caption uppercase tracking-[0.2em] text-grey-400">
+              Personal
+            </p>
+            <h2 className="mt-1 text-h2">Profile Details</h2>
+            <p className="mt-1 max-w-[30ch] text-body text-grey-500">
+              Your onboarding details that power the dashboard and meal planning.
+            </p>
+          </div>
+
           <button
-            onClick={() => setIsEditingProfile(!isEditingProfile)}
-            className="flex h-12 w-12 items-center justify-center rounded-full bg-accent-primary/20 text-accent-primary hover:bg-accent-primary/30 transition-colors"
+            onClick={() => setIsEditingProfile((prev) => !prev)}
+            className="flex h-12 w-12 items-center justify-center rounded-full border border-accent-primary/20 bg-accent-primary/10 text-label-sm font-semibold text-accent-primary transition-colors hover:bg-accent-primary/16"
             title="Edit profile"
           >
-            ✎
+            Edit
           </button>
         </div>
 
         {profileError && (
-          <div className="mb-4 rounded-[16px] border border-semantic-error/40 bg-semantic-error/10 p-4 text-body text-semantic-error">
+          <div className="mb-4 rounded-[18px] border border-semantic-error/35 bg-semantic-error/10 p-4 text-body text-semantic-error">
             {profileError}
           </div>
         )}
 
         {profileSuccess && (
-          <div className="mb-4 rounded-[16px] border border-semantic-success/40 bg-semantic-success/10 p-4 text-body text-semantic-success">
+          <div className="mb-4 rounded-[18px] border border-semantic-success/35 bg-semantic-success/10 p-4 text-body text-semantic-success">
             {profileSuccess}
           </div>
         )}
 
         {!isEditingProfile ? (
-          <div className="grid gap-6 sm:grid-cols-2">
-            <div>
-              <p className="text-label-sm uppercase text-grey-400">Name</p>
+          <div className="space-y-4">
+            <div className={mutedPanelClass}>
+              <p className="text-caption uppercase tracking-[0.18em] text-grey-400">
+                Full Name
+              </p>
               <p className="mt-2 text-body-lg text-base-white">
                 {user?.name || "Not set"}
               </p>
             </div>
-            <div>
-              <p className="text-label-sm uppercase text-grey-400">Gender</p>
-              <p className="mt-2 text-body-lg text-base-white">
-                {user?.gender ? user.gender.replace("_", " ") : "Not set"}
-              </p>
+
+            <div className="grid grid-cols-2 gap-3">
+              {profileItems.map((item) => (
+                <div key={item.label} className={mutedPanelClass}>
+                  <p className="text-caption uppercase tracking-[0.16em] text-grey-400">
+                    {item.label}
+                  </p>
+                  <p className="mt-2 text-body text-base-white">{item.value}</p>
+                </div>
+              ))}
             </div>
-            <div>
-              <p className="text-label-sm uppercase text-grey-400">Age</p>
-              <p className="mt-2 text-body-lg text-base-white">
-                {user?.age ?? "Not set"}
-              </p>
-            </div>
-            <div>
-              <p className="text-label-sm uppercase text-grey-400">Height</p>
-              <p className="mt-2 text-body-lg text-base-white">
-                {user?.height
-                  ? `${user.height.value} ${user.height.unit}`
-                  : "Not set"}
-              </p>
-            </div>
-            <div>
-              <p className="text-label-sm uppercase text-grey-400">Weight</p>
-              <p className="mt-2 text-body-lg text-base-white">
-                {user?.weight
-                  ? `${user.weight.value} ${user.weight.unit}`
-                  : "Not set"}
-              </p>
-            </div>
-            <div>
-              <p className="text-label-sm uppercase text-grey-400">
-                Current Weight (Dashboard)
-              </p>
-              <p className="mt-2 text-body-lg text-base-white">
-                {typeof currentWeightKg === "number"
-                  ? `${currentWeightKg} kg`
-                  : "Not logged"}
-              </p>
-            </div>
-            <div>
-              <p className="text-label-sm uppercase text-grey-400">Goal</p>
-              <p className="mt-2 text-body-lg text-base-white">
-                {user?.goal ? user.goal.replace(/_/g, " ") : "Not set"}
-              </p>
-            </div>
-            <div>
-              <p className="text-label-sm uppercase text-grey-400">
-                Activity Level
-              </p>
-              <p className="mt-2 text-body-lg text-base-white">
-                {user?.activityLevel
-                  ? user.activityLevel.replace(/_/g, " ")
-                  : "Not set"}
-              </p>
-            </div>
-            <div>
-              <p className="text-label-sm uppercase text-grey-400">
-                Daily Steps
-              </p>
-              <p className="mt-2 text-body-lg text-base-white">
-                {typeof user?.dailySteps === "number"
-                  ? `${user.dailySteps.toLocaleString()} steps`
-                  : "Not set"}
-              </p>
-            </div>
-            <div>
-              <p className="text-label-sm uppercase text-grey-400">
+
+            <div className={mutedPanelClass}>
+              <p className="text-caption uppercase tracking-[0.16em] text-grey-400">
                 Dietary Preferences
               </p>
-              <p className="mt-2 text-body-lg text-base-white">
-                {user?.dietaryPreferences?.length
-                  ? user.dietaryPreferences.join(", ").replace(/_/g, " ")
-                  : "Not set"}
-              </p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {dietaryItems.length ? (
+                  dietaryItems.map((item) => (
+                    <span
+                      key={item}
+                      className="rounded-full border border-accent-primary/20 bg-accent-primary/10 px-3 py-1.5 text-label-sm text-accent-primary"
+                    >
+                      {item}
+                    </span>
+                  ))
+                ) : (
+                  <span className="text-body text-grey-400">Not set</span>
+                )}
+              </div>
             </div>
-            <div className="sm:col-span-2">
-              <p className="text-label-sm uppercase text-grey-400">
+
+            <div className={mutedPanelClass}>
+              <p className="text-caption uppercase tracking-[0.16em] text-grey-400">
                 Medical Conditions
               </p>
-              <p className="mt-2 text-body-lg text-base-white">
-                {user?.medicalConditions?.length
-                  ? user.medicalConditions.join(", ")
-                  : "None"}
-              </p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {medicalItems.length ? (
+                  medicalItems.map((item) => (
+                    <span
+                      key={item}
+                      className="rounded-full border border-grey-700/50 bg-grey-900/70 px-3 py-1.5 text-label-sm text-grey-300"
+                    >
+                      {item}
+                    </span>
+                  ))
+                ) : (
+                  <span className="text-body text-grey-400">None</span>
+                )}
+              </div>
             </div>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-5">
             <div>
-              <p className="mb-2 text-label-sm uppercase text-grey-400">Name</p>
+              <p className="mb-2 text-label-sm uppercase tracking-[0.14em] text-grey-400">
+                Name
+              </p>
               <TextInput
                 value={form.name}
                 onChange={(e) =>
                   setForm((prev) => ({ ...prev, name: e.target.value }))
                 }
                 placeholder="Your name"
+                className="border border-grey-700/40"
               />
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <p className="mb-2 text-label-sm uppercase text-grey-400">
+                <p className="mb-2 text-label-sm uppercase tracking-[0.14em] text-grey-400">
                   Gender
                 </p>
                 <select
@@ -423,17 +461,17 @@ export const Profile = () => {
                       gender: e.target.value as ProfileFormState["gender"],
                     }))
                   }
-                  className="h-14 w-full rounded-card bg-grey-900 px-4 text-body-lg text-base-white outline-none focus:ring-2 focus:ring-inset focus:ring-accent-primary/50"
+                  className={selectClass}
                 >
                   {GENDER_OPTIONS.map((option) => (
                     <option key={option} value={option}>
-                      {option}
+                      {formatLabel(option)}
                     </option>
                   ))}
                 </select>
               </div>
               <div>
-                <p className="mb-2 text-label-sm uppercase text-grey-400">
+                <p className="mb-2 text-label-sm uppercase tracking-[0.14em] text-grey-400">
                   Age
                 </p>
                 <TextInput
@@ -443,14 +481,15 @@ export const Profile = () => {
                     setForm((prev) => ({ ...prev, age: e.target.value }))
                   }
                   placeholder="Age"
+                  className="border border-grey-700/40"
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <p className="mb-2 text-label-sm uppercase text-grey-400">
-                  Height Value
+                <p className="mb-2 text-label-sm uppercase tracking-[0.14em] text-grey-400">
+                  Height
                 </p>
                 <TextInput
                   type="number"
@@ -462,22 +501,22 @@ export const Profile = () => {
                     }))
                   }
                   placeholder="Height"
+                  className="border border-grey-700/40"
                 />
               </div>
               <div>
-                <p className="mb-2 text-label-sm uppercase text-grey-400">
-                  Height Unit
+                <p className="mb-2 text-label-sm uppercase tracking-[0.14em] text-grey-400">
+                  Unit
                 </p>
                 <select
                   value={form.heightUnit}
                   onChange={(e) =>
                     setForm((prev) => ({
                       ...prev,
-                      heightUnit: e.target
-                        .value as ProfileFormState["heightUnit"],
+                      heightUnit: e.target.value as ProfileFormState["heightUnit"],
                     }))
                   }
-                  className="h-14 w-full rounded-card bg-grey-900 px-4 text-body-lg text-base-white outline-none focus:ring-2 focus:ring-inset focus:ring-accent-primary/50"
+                  className={selectClass}
                 >
                   <option value="cm">cm</option>
                   <option value="ft">ft</option>
@@ -488,8 +527,8 @@ export const Profile = () => {
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <p className="mb-2 text-label-sm uppercase text-grey-400">
-                  Weight Value
+                <p className="mb-2 text-label-sm uppercase tracking-[0.14em] text-grey-400">
+                  Weight
                 </p>
                 <TextInput
                   type="number"
@@ -501,22 +540,22 @@ export const Profile = () => {
                     }))
                   }
                   placeholder="Weight"
+                  className="border border-grey-700/40"
                 />
               </div>
               <div>
-                <p className="mb-2 text-label-sm uppercase text-grey-400">
-                  Weight Unit
+                <p className="mb-2 text-label-sm uppercase tracking-[0.14em] text-grey-400">
+                  Unit
                 </p>
                 <select
                   value={form.weightUnit}
                   onChange={(e) =>
                     setForm((prev) => ({
                       ...prev,
-                      weightUnit: e.target
-                        .value as ProfileFormState["weightUnit"],
+                      weightUnit: e.target.value as ProfileFormState["weightUnit"],
                     }))
                   }
-                  className="h-14 w-full rounded-card bg-grey-900 px-4 text-body-lg text-base-white outline-none focus:ring-2 focus:ring-inset focus:ring-accent-primary/50"
+                  className={selectClass}
                 >
                   <option value="kg">kg</option>
                   <option value="lb">lb</option>
@@ -527,7 +566,7 @@ export const Profile = () => {
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <p className="mb-2 text-label-sm uppercase text-grey-400">
+                <p className="mb-2 text-label-sm uppercase tracking-[0.14em] text-grey-400">
                   Goal
                 </p>
                 <select
@@ -538,17 +577,17 @@ export const Profile = () => {
                       goal: e.target.value as ProfileFormState["goal"],
                     }))
                   }
-                  className="h-14 w-full rounded-card bg-grey-900 px-4 text-body-lg text-base-white outline-none focus:ring-2 focus:ring-inset focus:ring-accent-primary/50"
+                  className={selectClass}
                 >
                   {GOAL_OPTIONS.map((option) => (
                     <option key={option} value={option}>
-                      {option.replace(/_/g, " ")}
+                      {formatLabel(option)}
                     </option>
                   ))}
                 </select>
               </div>
               <div>
-                <p className="mb-2 text-label-sm uppercase text-grey-400">
+                <p className="mb-2 text-label-sm uppercase tracking-[0.14em] text-grey-400">
                   Activity
                 </p>
                 <select
@@ -556,15 +595,14 @@ export const Profile = () => {
                   onChange={(e) =>
                     setForm((prev) => ({
                       ...prev,
-                      activityLevel: e.target
-                        .value as ProfileFormState["activityLevel"],
+                      activityLevel: e.target.value as ProfileFormState["activityLevel"],
                     }))
                   }
-                  className="h-14 w-full rounded-card bg-grey-900 px-4 text-body-lg text-base-white outline-none focus:ring-2 focus:ring-inset focus:ring-accent-primary/50"
+                  className={selectClass}
                 >
                   {ACTIVITY_OPTIONS.map((option) => (
                     <option key={option} value={option}>
-                      {option.replace(/_/g, " ")}
+                      {formatLabel(option)}
                     </option>
                   ))}
                 </select>
@@ -572,7 +610,7 @@ export const Profile = () => {
             </div>
 
             <div>
-              <p className="mb-2 text-label-sm uppercase text-grey-400">
+              <p className="mb-2 text-label-sm uppercase tracking-[0.14em] text-grey-400">
                 Daily Steps
               </p>
               <TextInput
@@ -582,11 +620,12 @@ export const Profile = () => {
                   setForm((prev) => ({ ...prev, dailySteps: e.target.value }))
                 }
                 placeholder="Daily steps"
+                className="border border-grey-700/40"
               />
             </div>
 
             <div>
-              <p className="mb-2 text-label-sm uppercase text-grey-400">
+              <p className="mb-2 text-label-sm uppercase tracking-[0.14em] text-grey-400">
                 Dietary Preferences
               </p>
               <div className="flex flex-wrap gap-2">
@@ -597,13 +636,13 @@ export const Profile = () => {
                       key={option}
                       type="button"
                       onClick={() => toggleDietaryPreference(option)}
-                      className={`rounded-full border px-3 py-2 text-label-sm ${
+                      className={`rounded-full border px-3 py-2 text-label-sm transition-colors ${
                         active
-                          ? "border-accent-primary bg-accent-primary/20 text-accent-primary"
-                          : "border-grey-700/60 bg-grey-900/50 text-grey-300"
+                          ? "border-accent-primary/30 bg-accent-primary/12 text-accent-primary"
+                          : "border-grey-700/50 bg-grey-900/55 text-grey-300"
                       }`}
                     >
-                      {option.replace(/_/g, " ")}
+                      {formatLabel(option)}
                     </button>
                   );
                 })}
@@ -611,8 +650,8 @@ export const Profile = () => {
             </div>
 
             <div>
-              <p className="mb-2 text-label-sm uppercase text-grey-400">
-                Medical Conditions (comma separated)
+              <p className="mb-2 text-label-sm uppercase tracking-[0.14em] text-grey-400">
+                Medical Conditions
               </p>
               <TextInput
                 value={form.medicalConditionsRaw}
@@ -623,47 +662,62 @@ export const Profile = () => {
                   }))
                 }
                 placeholder="Example: thyroid, diabetes"
+                className="border border-grey-700/40"
               />
+              <p className="mt-2 text-caption text-grey-500">
+                Separate multiple conditions with commas.
+              </p>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-3 pt-1">
               <Button
                 variant="outline"
                 onClick={() => setIsEditingProfile(false)}
-                className="w-full"
+                className="w-full border-grey-700/50 bg-transparent"
               >
                 Cancel
               </Button>
               <Button
                 onClick={handleProfileSave}
                 loading={isSavingProfile}
-                className="w-full"
+                className="w-full bg-accent-primary text-black hover:bg-accent-primary/90"
               >
-                Save Changes
+                Save
               </Button>
             </div>
           </div>
         )}
       </section>
 
-      {/* Security Section - Change Password */}
-      <section className="rounded-[26px] border border-grey-700/50 bg-gradient-to-r from-grey-900/80 to-grey-900/30 p-6 shadow-card-lg">
+      <section className={sectionCardClass}>
         <button
           type="button"
           onClick={() => setIsPasswordOpen((prev) => !prev)}
-          className="text-h2 text-left text-accent-primary"
+          className="flex w-full items-center justify-between text-left"
         >
-          Change Password
+          <div>
+            <p className="text-caption uppercase tracking-[0.2em] text-grey-400">
+              Security
+            </p>
+            <h2 className="mt-1 text-h2">Password</h2>
+          </div>
+          <span className="rounded-full border border-accent-primary/20 bg-accent-primary/10 px-3 py-1 text-label-sm text-accent-primary">
+            {isPasswordOpen ? "Close" : "Update"}
+          </span>
         </button>
 
+        <p className="mt-2 max-w-[28ch] text-body text-grey-500">
+          Keep your account secure with a fresh password you can remember.
+        </p>
+
         {isPasswordOpen && passwordError && (
-          <div className="mb-4 rounded-[16px] border border-semantic-error/40 bg-semantic-error/10 p-4 text-body text-semantic-error">
+          <div className="mt-4 rounded-[18px] border border-semantic-error/35 bg-semantic-error/10 p-4 text-body text-semantic-error">
             {passwordError}
           </div>
         )}
 
         {isPasswordOpen && passwordSuccess && (
-          <div className="mb-4 rounded-[16px] border border-semantic-success/40 bg-semantic-success/10 p-4 text-body text-semantic-success">
+          <div className="mt-4 rounded-[18px] border border-semantic-success/35 bg-semantic-success/10 p-4 text-body text-semantic-success">
             {passwordSuccess}
           </div>
         )}
@@ -671,7 +725,7 @@ export const Profile = () => {
         {isPasswordOpen && (
           <div className="mt-5 space-y-4">
             <div>
-              <label className="block text-label-lg uppercase text-grey-300 mb-2">
+              <label className="mb-2 block text-label-sm uppercase tracking-[0.14em] text-grey-400">
                 Current Password
               </label>
               <TextInput
@@ -679,11 +733,12 @@ export const Profile = () => {
                 value={currentPassword}
                 onChange={(e) => setCurrentPassword(e.target.value)}
                 placeholder="Enter your current password"
+                className="border border-grey-700/40"
               />
             </div>
 
             <div>
-              <label className="block text-label-lg uppercase text-grey-300 mb-2">
+              <label className="mb-2 block text-label-sm uppercase tracking-[0.14em] text-grey-400">
                 New Password
               </label>
               <TextInput
@@ -691,18 +746,20 @@ export const Profile = () => {
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 placeholder="Enter your new password"
+                className="border border-grey-700/40"
               />
             </div>
 
             <div>
-              <label className="block text-label-lg uppercase text-grey-300 mb-2">
-                Confirm New Password
+              <label className="mb-2 block text-label-sm uppercase tracking-[0.14em] text-grey-400">
+                Confirm Password
               </label>
               <TextInput
                 type="password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="Confirm your new password"
+                className="border border-grey-700/40"
               />
             </div>
 
@@ -710,18 +767,77 @@ export const Profile = () => {
               onClick={handleChangePassword}
               loading={isChangingPassword}
               fullWidth
-              className="mt-6"
+              className="mt-2 bg-accent-primary text-base-white hover:bg-accent-primary/90"
             >
               Change Password
             </Button>
 
             <p className="text-caption text-grey-500">
-              Password must be at least 6 characters long. You'll need to log in
-              again after changing it.
+              Password must be at least 6 characters long. After changing it,
+              you may need to sign in again.
             </p>
           </div>
         )}
       </section>
+      <section className="mx-2 p-1">
+        <button
+          onClick={() => setIsLogoutConfirmOpen(true)}
+          disabled={isLoggingOut}
+          className="mt-5 h-12 w-full rounded-full border border-grey-700/50 bg-grey-900/65 text-body font-semibold text-grey-300 transition-colors hover:border-semantic-error/35 hover:bg-semantic-error/10 hover:text-semantic-error disabled:opacity-50"
+        >
+          {isLoggingOut ? "Logging out..." : "Logout"}
+        </button>
+      </section>
+
+      {isLogoutConfirmOpen && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-base-black/45 px-4 pb-6 pt-10 backdrop-blur-md">
+          <button
+            type="button"
+            aria-label="Close logout confirmation"
+            className="absolute inset-0"
+            onClick={() => setIsLogoutConfirmOpen(false)}
+          />
+
+          <div className="relative w-full max-w-[420px] rounded-[30px] border border-base-white/10 bg-[linear-gradient(180deg,rgba(28,28,30,0.92),rgba(15,18,26,0.9))] p-5 shadow-card-lg backdrop-blur-xl">
+            <div className="mx-auto mb-4 h-1.5 w-14 rounded-full bg-grey-700/70" />
+
+            <div className="flex items-start gap-4">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-semantic-error/25 bg-semantic-error/10 text-body-lg font-semibold text-semantic-error">
+                !
+              </div>
+
+              <div>
+                <p className="text-h3 text-base-white">Log out?</p>
+                <p className="mt-1 text-body text-grey-400">
+                  You will need to sign in again to access your dashboard,
+                  meals, and profile settings.
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-5 grid grid-cols-2 gap-3">
+              <Button
+                variant="outline"
+                onClick={() => setIsLogoutConfirmOpen(false)}
+                className="w-full border-grey-700/50 bg-transparent"
+              >
+                Cancel
+              </Button>
+              <button
+                type="button"
+                onClick={async () => {
+                  await handleLogout();
+                  setIsLogoutConfirmOpen(false);
+                }}
+                disabled={isLoggingOut}
+                className="h-14 w-full rounded-card border border-semantic-error/25 bg-semantic-error/12 px-6 text-body-lg font-semibold text-semantic-error transition-colors hover:bg-semantic-error/18 disabled:opacity-50"
+              >
+                {isLoggingOut ? "Logging out..." : "Logout"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
