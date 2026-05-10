@@ -66,6 +66,30 @@ const LogoutIcon = ({ className = "" }: { className?: string }) => (
   </svg>
 );
 
+const EditIcon = ({ className = "" }: { className?: string }) => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    aria-hidden="true"
+    className={className}
+  >
+    <path
+      d="M14.5 4.5L19.5 9.5"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M4 20L8.5 19.2L18.2 9.5C18.8 8.9 18.8 7.9 18.2 7.3L16.7 5.8C16.1 5.2 15.1 5.2 14.5 5.8L4.8 15.5L4 20Z"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+
 type ProfileFormState = {
   name: string;
   gender: "male" | "female" | "other";
@@ -91,8 +115,9 @@ export const Profile = () => {
   const [changePassword, { isLoading: isChangingPassword }] =
     useChangePasswordMutation();
 
-  const [isEditingProfile, setIsEditingProfile] = useState(false);
-  const [isPasswordOpen, setIsPasswordOpen] = useState(false);
+  const [activeModal, setActiveModal] = useState<"profile" | "password" | null>(
+    null
+  );
   const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
   const [profileError, setProfileError] = useState<string | null>(null);
   const [profileSuccess, setProfileSuccess] = useState<string | null>(null);
@@ -122,6 +147,8 @@ export const Profile = () => {
     "rounded-[22px] border border-grey-700/30 bg-grey-900/45 p-4";
   const selectClass =
     "h-14 w-full rounded-card border border-grey-700/40 bg-grey-900 px-4 text-body-lg text-base-white outline-none transition-all focus:ring-2 focus:ring-inset focus:ring-accent-primary/50";
+
+  const isAnyModalOpen = activeModal !== null || isLogoutConfirmOpen;
 
   const handleLogout = async () => {
     try {
@@ -157,7 +184,7 @@ export const Profile = () => {
   }, [user]);
 
   useEffect(() => {
-    if (!isLogoutConfirmOpen) return;
+    if (!isAnyModalOpen) return;
 
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -165,7 +192,7 @@ export const Profile = () => {
     return () => {
       document.body.style.overflow = previousOverflow;
     };
-  }, [isLogoutConfirmOpen]);
+  }, [isAnyModalOpen]);
 
   const handleChangePassword = async () => {
     setPasswordError(null);
@@ -258,7 +285,7 @@ export const Profile = () => {
       }).unwrap();
 
       setProfileSuccess("Profile updated successfully.");
-      setIsEditingProfile(false);
+      setActiveModal(null);
     } catch (err: any) {
       const message =
         err?.data?.message || "Could not update profile. Please try again.";
@@ -375,8 +402,6 @@ export const Profile = () => {
             </p>
           </div>
         </div>
-
-        
       </section>
 
       <section className={`${sectionCardClass} mb-5`}>
@@ -385,18 +410,18 @@ export const Profile = () => {
             <p className="text-caption uppercase tracking-[0.2em] text-grey-400">
               Personal
             </p>
-            <h2 className="mt-1 text-h2">Profile Details</h2>
-            <p className="mt-1 max-w-[30ch] text-body text-grey-500">
-              Your onboarding details that power the dashboard and meal planning.
-            </p>
+            <h2 className="mt-1 text-h2">Profile Details</h2>           
           </div>
 
           <button
-            onClick={() => setIsEditingProfile((prev) => !prev)}
-            className="flex h-12 w-12 items-center justify-center rounded-full border border-accent-primary/20 bg-accent-primary/10 text-label-sm font-semibold text-accent-primary transition-colors hover:bg-accent-primary/16"
+            onClick={() => {
+              if (!isAnyModalOpen) setActiveModal("profile");
+            }}
+            disabled={isAnyModalOpen}
+            className="flex h-12 items-center gap-2 rounded-full border border-accent-primary/30 bg-accent-primary/12 px-4 text-label-sm font-semibold text-accent-primary transition-colors hover:bg-accent-primary/18 disabled:cursor-not-allowed disabled:opacity-60"
             title="Edit profile"
           >
-            Edit
+              <EditIcon className="h-4 w-4" />
           </button>
         </div>
 
@@ -412,309 +437,390 @@ export const Profile = () => {
           </div>
         )}
 
-        {!isEditingProfile ? (
-          <div className="space-y-4">
-            <div className={mutedPanelClass}>
-              <p className="text-caption uppercase tracking-[0.18em] text-grey-400">
-                Full Name
-              </p>
-              <p className="mt-2 text-body-lg text-base-white">
-                {user?.name || "Not set"}
-              </p>
-            </div>
+        <div className="space-y-4">
+          <div className={mutedPanelClass}>
+            <p className="text-caption uppercase tracking-[0.18em] text-grey-400">
+              Full Name
+            </p>
+            <p className="mt-2 text-body-lg text-base-white">
+              {user?.name || "Not set"}
+            </p>
+          </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              {profileItems.map((item) => (
-                <div key={item.label} className={mutedPanelClass}>
-                  <p className="text-caption uppercase tracking-[0.16em] text-grey-400">
-                    {item.label}
-                  </p>
-                  <p className="mt-2 text-body text-base-white">{item.value}</p>
-                </div>
-              ))}
-            </div>
-
-            <div className={mutedPanelClass}>
-              <p className="text-caption uppercase tracking-[0.16em] text-grey-400">
-                Dietary Preferences
-              </p>
-              <div className="mt-3 flex flex-wrap gap-2">
-                {dietaryItems.length ? (
-                  dietaryItems.map((item) => (
-                    <span
-                      key={item}
-                      className="rounded-full border border-accent-primary/20 bg-accent-primary/10 px-3 py-1.5 text-label-sm text-accent-primary"
-                    >
-                      {item}
-                    </span>
-                  ))
-                ) : (
-                  <span className="text-body text-grey-400">Not set</span>
-                )}
+          <div className="grid grid-cols-2 gap-3">
+            {profileItems.map((item) => (
+              <div key={item.label} className={mutedPanelClass}>
+                <p className="text-caption uppercase tracking-[0.16em] text-grey-400">
+                  {item.label}
+                </p>
+                <p className="mt-2 text-body text-base-white">{item.value}</p>
               </div>
-            </div>
+            ))}
+          </div>
 
-            <div className={mutedPanelClass}>
-              <p className="text-caption uppercase tracking-[0.16em] text-grey-400">
-                Medical Conditions
-              </p>
-              <div className="mt-3 flex flex-wrap gap-2">
-                {medicalItems.length ? (
-                  medicalItems.map((item) => (
-                    <span
-                      key={item}
-                      className="rounded-full border border-grey-700/50 bg-grey-900/70 px-3 py-1.5 text-label-sm text-grey-300"
-                    >
-                      {item}
-                    </span>
-                  ))
-                ) : (
-                  <span className="text-body text-grey-400">None</span>
-                )}
-              </div>
+          <div className={mutedPanelClass}>
+            <p className="text-caption uppercase tracking-[0.16em] text-grey-400">
+              Dietary Preferences
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {dietaryItems.length ? (
+                dietaryItems.map((item) => (
+                  <span
+                    key={item}
+                    className="rounded-full border border-accent-primary/20 bg-accent-primary/10 px-3 py-1.5 text-label-sm text-accent-primary"
+                  >
+                    {item}
+                  </span>
+                ))
+              ) : (
+                <span className="text-body text-grey-400">Not set</span>
+              )}
             </div>
           </div>
-        ) : (
-          <div className="space-y-5">
-            <div>
-              <p className="mb-2 text-label-sm uppercase tracking-[0.14em] text-grey-400">
-                Name
-              </p>
-              <TextInput
-                value={form.name}
-                onChange={(e) =>
-                  setForm((prev) => ({ ...prev, name: e.target.value }))
-                }
-                placeholder="Your name"
-                className="border border-grey-700/40"
-              />
+
+          <div className={mutedPanelClass}>
+            <p className="text-caption uppercase tracking-[0.16em] text-grey-400">
+              Medical Conditions
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {medicalItems.length ? (
+                medicalItems.map((item) => (
+                  <span
+                    key={item}
+                    className="rounded-full border border-grey-700/50 bg-grey-900/70 px-3 py-1.5 text-label-sm text-grey-300"
+                  >
+                    {item}
+                  </span>
+                ))
+              ) : (
+                <span className="text-body text-grey-400">None</span>
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className={sectionCardClass}>
+        <button
+          type="button"
+          onClick={() => {
+            if (!isAnyModalOpen) setActiveModal("password");
+          }}
+          disabled={isAnyModalOpen}
+          className="flex w-full items-center justify-between text-left"
+        >
+          <div>
+            <p className="text-caption uppercase tracking-[0.2em] text-grey-400">
+              Security
+            </p>
+            <h2 className="mt-1 text-h2">Password</h2>
+          </div>
+          <span className="rounded-full border border-accent-primary/20 bg-accent-primary/10 px-3 py-1 text-label-sm text-accent-primary">
+            Update
+          </span>
+        </button>
+
+        <p className="mt-2 max-w-[28ch] text-body text-grey-500">
+          Keep your account secure with a fresh password you can remember.
+        </p>
+
+      </section>
+      <section className="mx-2 p-1">
+        <button
+          onClick={() => setIsLogoutConfirmOpen(true)}
+          disabled={isLoggingOut || isAnyModalOpen}
+          className="mt-5 flex h-12 w-full items-center justify-center gap-2 rounded-full border border-semantic-error/35 bg-semantic-error/10 text-body font-semibold text-semantic-error transition-colors hover:bg-semantic-error/16 disabled:opacity-50"
+        >
+          <LogoutIcon className="h-6 w-6" />
+          {isLoggingOut ? "Logging out..." : "Logout"}
+        </button>
+      </section>
+
+      {activeModal === "profile" && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-base-black/45 px-4 backdrop-blur-md animate-modal-overlay">
+          <button
+            type="button"
+            aria-label="Close profile editor"
+            className="absolute inset-0"
+            onClick={() => setActiveModal(null)}
+          />
+
+          <div className="relative w-full max-w-[520px] max-h-[90vh] overflow-hidden rounded-[30px] border border-base-white/10 bg-[linear-gradient(180deg,rgba(28,28,30,0.92),rgba(15,18,26,0.9))] p-5 py-3 my-auto shadow-card-lg backdrop-blur-xl animate-modal-sheet">
+            <div className="mx-auto mb-4 h-1.5 w-14 rounded-full bg-grey-700/70" />
+
+            <div className="mb-4 flex items-start justify-between gap-4">
+              <div>
+                <p className="text-caption uppercase tracking-[0.2em] text-grey-400">
+                  Edit Profile
+                </p>
+                <p className="mt-1 text-body text-grey-400">
+                  Update your onboarding details and save the changes.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setActiveModal(null)}
+                className="flex h-10 w-10 items-center justify-center rounded-full border border-grey-700/50 bg-grey-900/60 text-grey-300"
+                aria-label="Close"
+              >
+                ✕
+              </button>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <p className="mb-2 text-label-sm uppercase tracking-[0.14em] text-grey-400">
-                  Gender
-                </p>
-                <select
-                  value={form.gender}
-                  onChange={(e) =>
-                    setForm((prev) => ({
-                      ...prev,
-                      gender: e.target.value as ProfileFormState["gender"],
-                    }))
-                  }
-                  className={selectClass}
-                >
-                  {GENDER_OPTIONS.map((option) => (
-                    <option key={option} value={option}>
-                      {formatLabel(option)}
-                    </option>
-                  ))}
-                </select>
+            {profileError && (
+              <div className="mb-4 rounded-[18px] border border-semantic-error/35 bg-semantic-error/10 p-4 text-body text-semantic-error">
+                {profileError}
               </div>
+            )}
+
+            {profileSuccess && (
+              <div className="mb-4 rounded-[18px] border border-semantic-success/35 bg-semantic-success/10 p-4 text-body text-semantic-success">
+                {profileSuccess}
+              </div>
+            )}
+
+            <div className="max-h-[60vh] space-y-5 overflow-y-auto pr-1">
               <div>
                 <p className="mb-2 text-label-sm uppercase tracking-[0.14em] text-grey-400">
-                  Age
+                  Name
                 </p>
                 <TextInput
-                  type="number"
-                  value={form.age}
+                  value={form.name}
                   onChange={(e) =>
-                    setForm((prev) => ({ ...prev, age: e.target.value }))
+                    setForm((prev) => ({ ...prev, name: e.target.value }))
                   }
-                  placeholder="Age"
+                  placeholder="Your name"
                   className="border border-grey-700/40"
                 />
               </div>
-            </div>
 
-            <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <p className="mb-2 text-label-sm uppercase tracking-[0.14em] text-grey-400">
+                    Gender
+                  </p>
+                  <select
+                    value={form.gender}
+                    onChange={(e) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        gender: e.target.value as ProfileFormState["gender"],
+                      }))
+                    }
+                    className={selectClass}
+                  >
+                    {GENDER_OPTIONS.map((option) => (
+                      <option key={option} value={option}>
+                        {formatLabel(option)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <p className="mb-2 text-label-sm uppercase tracking-[0.14em] text-grey-400">
+                    Age
+                  </p>
+                  <TextInput
+                    type="number"
+                    value={form.age}
+                    onChange={(e) =>
+                      setForm((prev) => ({ ...prev, age: e.target.value }))
+                    }
+                    placeholder="Age"
+                    className="border border-grey-700/40"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <p className="mb-2 text-label-sm uppercase tracking-[0.14em] text-grey-400">
+                    Height
+                  </p>
+                  <TextInput
+                    type="number"
+                    value={form.heightValue}
+                    onChange={(e) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        heightValue: e.target.value,
+                      }))
+                    }
+                    placeholder="Height"
+                    className="border border-grey-700/40"
+                  />
+                </div>
+                <div>
+                  <p className="mb-2 text-label-sm uppercase tracking-[0.14em] text-grey-400">
+                    Unit
+                  </p>
+                  <select
+                    value={form.heightUnit}
+                    onChange={(e) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        heightUnit: e.target.value as ProfileFormState["heightUnit"],
+                      }))
+                    }
+                    className={selectClass}
+                  >
+                    <option value="cm">cm</option>
+                    <option value="ft">ft</option>
+                    <option value="in">in</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <p className="mb-2 text-label-sm uppercase tracking-[0.14em] text-grey-400">
+                    Weight
+                  </p>
+                  <TextInput
+                    type="number"
+                    value={form.weightValue}
+                    onChange={(e) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        weightValue: e.target.value,
+                      }))
+                    }
+                    placeholder="Weight"
+                    className="border border-grey-700/40"
+                  />
+                </div>
+                <div>
+                  <p className="mb-2 text-label-sm uppercase tracking-[0.14em] text-grey-400">
+                    Unit
+                  </p>
+                  <select
+                    value={form.weightUnit}
+                    onChange={(e) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        weightUnit: e.target.value as ProfileFormState["weightUnit"],
+                      }))
+                    }
+                    className={selectClass}
+                  >
+                    <option value="kg">kg</option>
+                    <option value="lb">lb</option>
+                    <option value="lbs">lbs</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <p className="mb-2 text-label-sm uppercase tracking-[0.14em] text-grey-400">
+                    Goal
+                  </p>
+                  <select
+                    value={form.goal}
+                    onChange={(e) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        goal: e.target.value as ProfileFormState["goal"],
+                      }))
+                    }
+                    className={selectClass}
+                  >
+                    {GOAL_OPTIONS.map((option) => (
+                      <option key={option} value={option}>
+                        {formatLabel(option)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <p className="mb-2 text-label-sm uppercase tracking-[0.14em] text-grey-400">
+                    Activity
+                  </p>
+                  <select
+                    value={form.activityLevel}
+                    onChange={(e) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        activityLevel:
+                          e.target.value as ProfileFormState["activityLevel"],
+                      }))
+                    }
+                    className={selectClass}
+                  >
+                    {ACTIVITY_OPTIONS.map((option) => (
+                      <option key={option} value={option}>
+                        {formatLabel(option)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
               <div>
                 <p className="mb-2 text-label-sm uppercase tracking-[0.14em] text-grey-400">
-                  Height
+                  Daily Steps
                 </p>
                 <TextInput
                   type="number"
-                  value={form.heightValue}
+                  value={form.dailySteps}
                   onChange={(e) =>
-                    setForm((prev) => ({
-                      ...prev,
-                      heightValue: e.target.value,
-                    }))
+                    setForm((prev) => ({ ...prev, dailySteps: e.target.value }))
                   }
-                  placeholder="Height"
+                  placeholder="Daily steps"
                   className="border border-grey-700/40"
                 />
               </div>
-              <div>
-                <p className="mb-2 text-label-sm uppercase tracking-[0.14em] text-grey-400">
-                  Unit
-                </p>
-                <select
-                  value={form.heightUnit}
-                  onChange={(e) =>
-                    setForm((prev) => ({
-                      ...prev,
-                      heightUnit: e.target.value as ProfileFormState["heightUnit"],
-                    }))
-                  }
-                  className={selectClass}
-                >
-                  <option value="cm">cm</option>
-                  <option value="ft">ft</option>
-                  <option value="in">in</option>
-                </select>
-              </div>
-            </div>
 
-            <div className="grid grid-cols-2 gap-3">
               <div>
                 <p className="mb-2 text-label-sm uppercase tracking-[0.14em] text-grey-400">
-                  Weight
+                  Dietary Preferences
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {DIETARY_OPTIONS.map((option) => {
+                    const active = form.dietaryPreferences.includes(option);
+                    return (
+                      <button
+                        key={option}
+                        type="button"
+                        onClick={() => toggleDietaryPreference(option)}
+                        className={`rounded-full border px-3 py-2 text-label-sm transition-colors ${
+                          active
+                            ? "border-accent-primary/30 bg-accent-primary/12 text-accent-primary"
+                            : "border-grey-700/50 bg-grey-900/55 text-grey-300"
+                        }`}
+                      >
+                        {formatLabel(option)}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div>
+                <p className="mb-2 text-label-sm uppercase tracking-[0.14em] text-grey-400">
+                  Medical Conditions
                 </p>
                 <TextInput
-                  type="number"
-                  value={form.weightValue}
+                  value={form.medicalConditionsRaw}
                   onChange={(e) =>
                     setForm((prev) => ({
                       ...prev,
-                      weightValue: e.target.value,
+                      medicalConditionsRaw: e.target.value,
                     }))
                   }
-                  placeholder="Weight"
+                  placeholder="Example: thyroid, diabetes"
                   className="border border-grey-700/40"
                 />
-              </div>
-              <div>
-                <p className="mb-2 text-label-sm uppercase tracking-[0.14em] text-grey-400">
-                  Unit
+                <p className="mt-2 text-caption text-grey-500">
+                  Separate multiple conditions with commas.
                 </p>
-                <select
-                  value={form.weightUnit}
-                  onChange={(e) =>
-                    setForm((prev) => ({
-                      ...prev,
-                      weightUnit: e.target.value as ProfileFormState["weightUnit"],
-                    }))
-                  }
-                  className={selectClass}
-                >
-                  <option value="kg">kg</option>
-                  <option value="lb">lb</option>
-                  <option value="lbs">lbs</option>
-                </select>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <p className="mb-2 text-label-sm uppercase tracking-[0.14em] text-grey-400">
-                  Goal
-                </p>
-                <select
-                  value={form.goal}
-                  onChange={(e) =>
-                    setForm((prev) => ({
-                      ...prev,
-                      goal: e.target.value as ProfileFormState["goal"],
-                    }))
-                  }
-                  className={selectClass}
-                >
-                  {GOAL_OPTIONS.map((option) => (
-                    <option key={option} value={option}>
-                      {formatLabel(option)}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <p className="mb-2 text-label-sm uppercase tracking-[0.14em] text-grey-400">
-                  Activity
-                </p>
-                <select
-                  value={form.activityLevel}
-                  onChange={(e) =>
-                    setForm((prev) => ({
-                      ...prev,
-                      activityLevel: e.target.value as ProfileFormState["activityLevel"],
-                    }))
-                  }
-                  className={selectClass}
-                >
-                  {ACTIVITY_OPTIONS.map((option) => (
-                    <option key={option} value={option}>
-                      {formatLabel(option)}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <div>
-              <p className="mb-2 text-label-sm uppercase tracking-[0.14em] text-grey-400">
-                Daily Steps
-              </p>
-              <TextInput
-                type="number"
-                value={form.dailySteps}
-                onChange={(e) =>
-                  setForm((prev) => ({ ...prev, dailySteps: e.target.value }))
-                }
-                placeholder="Daily steps"
-                className="border border-grey-700/40"
-              />
-            </div>
-
-            <div>
-              <p className="mb-2 text-label-sm uppercase tracking-[0.14em] text-grey-400">
-                Dietary Preferences
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {DIETARY_OPTIONS.map((option) => {
-                  const active = form.dietaryPreferences.includes(option);
-                  return (
-                    <button
-                      key={option}
-                      type="button"
-                      onClick={() => toggleDietaryPreference(option)}
-                      className={`rounded-full border px-3 py-2 text-label-sm transition-colors ${
-                        active
-                          ? "border-accent-primary/30 bg-accent-primary/12 text-accent-primary"
-                          : "border-grey-700/50 bg-grey-900/55 text-grey-300"
-                      }`}
-                    >
-                      {formatLabel(option)}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div>
-              <p className="mb-2 text-label-sm uppercase tracking-[0.14em] text-grey-400">
-                Medical Conditions
-              </p>
-              <TextInput
-                value={form.medicalConditionsRaw}
-                onChange={(e) =>
-                  setForm((prev) => ({
-                    ...prev,
-                    medicalConditionsRaw: e.target.value,
-                  }))
-                }
-                placeholder="Example: thyroid, diabetes"
-                className="border border-grey-700/40"
-              />
-              <p className="mt-2 text-caption text-grey-500">
-                Separate multiple conditions with commas.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3 pt-1">
+            <div className="mt-5 grid grid-cols-2 gap-3">
               <Button
                 variant="outline"
-                onClick={() => setIsEditingProfile(false)}
+                onClick={() => setActiveModal(null)}
                 className="w-full border-grey-700/50 bg-transparent"
               >
                 Cancel
@@ -728,109 +834,109 @@ export const Profile = () => {
               </Button>
             </div>
           </div>
-        )}
-      </section>
+        </div>
+      )}
 
-      <section className={sectionCardClass}>
-        <button
-          type="button"
-          onClick={() => setIsPasswordOpen((prev) => !prev)}
-          className="flex w-full items-center justify-between text-left"
-        >
-          <div>
-            <p className="text-caption uppercase tracking-[0.2em] text-grey-400">
-              Security
-            </p>
-            <h2 className="mt-1 text-h2">Password</h2>
-          </div>
-          <span className="rounded-full border border-accent-primary/20 bg-accent-primary/10 px-3 py-1 text-label-sm text-accent-primary">
-            {isPasswordOpen ? "Close" : "Update"}
-          </span>
-        </button>
+      {activeModal === "password" && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-base-black/45 px-4 pb-6 pt-10 backdrop-blur-md animate-modal-overlay">
+          <button
+            type="button"
+            aria-label="Close password modal"
+            className="absolute inset-0"
+            onClick={() => setActiveModal(null)}
+          />
 
-        <p className="mt-2 max-w-[28ch] text-body text-grey-500">
-          Keep your account secure with a fresh password you can remember.
-        </p>
+          <div className="relative w-full max-w-[420px] rounded-[30px] border border-base-white/10 bg-[linear-gradient(180deg,rgba(28,28,30,0.92),rgba(15,18,26,0.9))] p-5 shadow-card-lg backdrop-blur-xl animate-modal-sheet">
+            <div className="mx-auto mb-4 h-1.5 w-14 rounded-full bg-grey-700/70" />
 
-        {isPasswordOpen && passwordError && (
-          <div className="mt-4 rounded-[18px] border border-semantic-error/35 bg-semantic-error/10 p-4 text-body text-semantic-error">
-            {passwordError}
-          </div>
-        )}
-
-        {isPasswordOpen && passwordSuccess && (
-          <div className="mt-4 rounded-[18px] border border-semantic-success/35 bg-semantic-success/10 p-4 text-body text-semantic-success">
-            {passwordSuccess}
-          </div>
-        )}
-
-        {isPasswordOpen && (
-          <div className="mt-5 space-y-4">
-            <div>
-              <label className="mb-2 block text-label-sm uppercase tracking-[0.14em] text-grey-400">
-                Current Password
-              </label>
-              <TextInput
-                type="password"
-                value={currentPassword}
-                onChange={(e) => setCurrentPassword(e.target.value)}
-                placeholder="Enter your current password"
-                className="border border-grey-700/40"
-              />
+            <div className="mb-4 flex items-start justify-between gap-4">
+              <div>
+                <p className="text-caption uppercase tracking-[0.2em] text-grey-400">
+                  Security
+                </p>
+                <p className="mt-1 text-body text-grey-400">
+                  Change your password and keep your account secure.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setActiveModal(null)}
+                className="flex h-10 w-10 items-center justify-center rounded-full border border-grey-700/50 bg-grey-900/60 text-grey-300"
+                aria-label="Close"
+              >
+                ✕
+              </button>
             </div>
 
-            <div>
-              <label className="mb-2 block text-label-sm uppercase tracking-[0.14em] text-grey-400">
-                New Password
-              </label>
-              <TextInput
-                type="password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="Enter your new password"
-                className="border border-grey-700/40"
-              />
+            {passwordError && (
+              <div className="mb-4 rounded-[18px] border border-semantic-error/35 bg-semantic-error/10 p-4 text-body text-semantic-error">
+                {passwordError}
+              </div>
+            )}
+
+            {passwordSuccess && (
+              <div className="mb-4 rounded-[18px] border border-semantic-success/35 bg-semantic-success/10 p-4 text-body text-semantic-success">
+                {passwordSuccess}
+              </div>
+            )}
+
+            <div className="space-y-4">
+              <div>
+                <label className="mb-2 block text-label-sm uppercase tracking-[0.14em] text-grey-400">
+                  Current Password
+                </label>
+                <TextInput
+                  type="password"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  placeholder="Enter your current password"
+                  className="border border-grey-700/40"
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-label-sm uppercase tracking-[0.14em] text-grey-400">
+                  New Password
+                </label>
+                <TextInput
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="Enter your new password"
+                  className="border border-grey-700/40"
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-label-sm uppercase tracking-[0.14em] text-grey-400">
+                  Confirm Password
+                </label>
+                <TextInput
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Confirm your new password"
+                  className="border border-grey-700/40"
+                />
+              </div>
+
+              <Button
+                onClick={handleChangePassword}
+                loading={isChangingPassword}
+                fullWidth
+                className="mt-2 bg-white text-base-black hover:bg-accent-primary/90"
+              >
+                Change Password
+              </Button>
+
+              <p className="text-caption text-grey-500">
+                Password must be at least 6 characters long. After changing it,
+                you may need to sign in again.
+              </p>
             </div>
-
-            <div>
-              <label className="mb-2 block text-label-sm uppercase tracking-[0.14em] text-grey-400">
-                Confirm Password
-              </label>
-              <TextInput
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Confirm your new password"
-                className="border border-grey-700/40"
-              />
-            </div>
-
-            <Button
-              onClick={handleChangePassword}
-              loading={isChangingPassword}
-              fullWidth
-              className="mt-2 bg-accent-primary text-base-white hover:bg-accent-primary/90"
-            >
-              Change Password
-            </Button>
-
-            <p className="text-caption text-grey-500">
-              Password must be at least 6 characters long. After changing it,
-              you may need to sign in again.
-            </p>
           </div>
-        )}
-      </section>
-      <section className="mx-2 p-1">
-        <button
-          onClick={() => setIsLogoutConfirmOpen(true)}
-          disabled={isLoggingOut}
-          className="mt-5 flex h-12 w-full items-center justify-center gap-2 rounded-full border border-semantic-error/35 bg-semantic-error/10 text-body font-semibold text-semantic-error transition-colors hover:bg-semantic-error/16 disabled:opacity-50"
-        >
-          <LogoutIcon className="h-6 w-6" />
-          {isLoggingOut ? "Logging out..." : "Logout"}
-        </button>
-      </section>
+        </div>
+      )}
 
       {isLogoutConfirmOpen && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-base-black/45 px-4 pb-6 pt-10 backdrop-blur-md animate-modal-overlay">

@@ -22,6 +22,14 @@ function App() {
   return (
     <ThemeProvider>
     <Provider store={store}>
+      <div
+      style={{
+        maxWidth: "480px",
+        margin: "0 auto",
+        minHeight: window.innerHeight,
+        background: "#000000",
+      }}
+    >
       <BrowserRouter>
         <InstallPrompt />
         <Routes>
@@ -49,7 +57,7 @@ function App() {
           {/* Catch-all redirect to Splash for unknown public routes */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
-      </BrowserRouter>
+      </BrowserRouter></div>
     </Provider>
     </ThemeProvider>
   );
