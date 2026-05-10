@@ -6,6 +6,14 @@ export const Splash = () => {
 
     return (
         <div className="relative flex flex-col items-center justify-end w-full h-screen min-h-screen text-base-white overflow-hidden bg-base-black">
+            {/* Header / Logo Placeholder */}
+            <div className="absolute top-0 left-0 w-full px-6 pt-12 z-20 flex items-center">
+                {/* Replace this div with an <img src={logo} ... /> later */}
+                <div className="text-[22px] font-bold tracking-widest text-base-white">
+                    AAHAR AI
+                </div>
+            </div>
+
             {/* Background Image with Gradient Overlay */}
             <div className="absolute inset-0 w-full h-full z-0">
                 <img
@@ -18,10 +26,7 @@ export const Splash = () => {
 
             {/* Content Container */}
             <div className="relative z-10 w-full px-6 pb-8 flex flex-col text-left">
-                <h1 className="text-[28px] leading-[36px] font-semibold tracking-normal uppercase mb-3">
-                    AAHAR AI
-                </h1>
-
+                
                 <p className="text-[18px] leading-[26px] font-medium mb-2 pr-4">
                     Your personal nutrition & fitness coach for Indian lifestyles.
                 </p>

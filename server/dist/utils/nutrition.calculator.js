@@ -57,6 +57,14 @@ const MACRO_RATIOS = {
     gain_weight: { proteinPct: 0.25, carbsPct: 0.48, fatPct: 0.27 },
 };
 const KCAL_PER_G = { protein: 4, carbs: 4, fat: 9 };
+const MACRO_PERCENT_LIMITS = {
+    protein: { minPct: 0.1, maxPct: 0.35 },
+    carbs: { minPct: 0.45, maxPct: 0.65 },
+    fat: { minPct: 0.2, maxPct: 0.35 },
+};
+const PROTEIN_MAX_G_PER_KG = 2.0;
+const PREGNANCY_PROTEIN_FLOOR_G = 71;
+const PREGNANCY_CARB_FLOOR_G = 175;
 const SAFE_RANGE = {
     weightKg: { min: 25, max: 300 },
     heightCm: { min: 100, max: 250 },
@@ -71,6 +79,9 @@ function clampWithAudit(field, value, min, max, clampedInputs) {
         clampedInputs.push({ field, original: numeric, adjusted });
     }
     return adjusted;
+}
+function clampNumber(value, min, max) {
+    return Math.min(max, Math.max(min, value));
 }
 function normalizeMedicalConditions(medicalConditions = []) {
     const canonical = new Set();
@@ -195,13 +206,13 @@ function calculateDailyCalorieTarget(tdee, bmr, goal, medicalConditions = new Se
 }
 // ─── Step-5: Protein in grams ────────────────────────────────────────────────
 function calculateProteinGrams(weightKg, activityLevel, goal, medicalConditions = new Set()) {
-    // CKD override: protein capped at 0.6 g/kg (PDF p.7)
-    if (medicalConditions.has("ckd")) {
-        return Math.round(0.6 * weightKg);
-    }
     // Diabetic Kidney Disease
     if (medicalConditions.has("diabetic_kidney_disease")) {
         return Math.round(0.8 * weightKg);
+    }
+    // CKD override: protein capped at 0.6 g/kg (PDF p.7)
+    if (medicalConditions.has("ckd")) {
+        return Math.round(0.6 * weightKg);
     }
     let base = PROTEIN_PER_KG[activityLevel];
     // Goal bumps (PDF: high protein during cut preserves lean mass; higher for muscle gain)
@@ -209,7 +220,11 @@ function calculateProteinGrams(weightKg, activityLevel, goal, medicalConditions 
         base += 0.15;
     if (goal === "build_muscle")
         base += 0.2;
-    return Math.round(base * weightKg);
+    let proteinG = Math.round(base * weightKg);
+    if (medicalConditions.has("pregnancy")) {
+        proteinG = Math.max(proteinG, PREGNANCY_PROTEIN_FLOOR_G);
+    }
+    return proteinG;
 }
 // ─── Step-6: Macro grams ─────────────────────────────────────────────────────
 function calculateMacros(dailyCalorieTarget, weightKg, activityLevel, goal, medicalConditions = new Set()) {
@@ -221,18 +236,37 @@ function calculateMacros(dailyCalorieTarget, weightKg, activityLevel, goal, medi
     // conditions, keep the medical cap from calculateProteinGrams unchanged.
     const hasRenalRestriction = medicalConditions.has("ckd") ||
         medicalConditions.has("diabetic_kidney_disease");
-    const proteinG = hasRenalRestriction
+    const proteinMaxByCaloriesG = Math.floor((dailyCalorieTarget * MACRO_PERCENT_LIMITS.protein.maxPct) /
+        KCAL_PER_G.protein);
+    const proteinMaxByWeightG = Math.round(weightKg * PROTEIN_MAX_G_PER_KG);
+    const proteinAbsoluteMaxG = Math.max(0, Math.min(proteinMaxByCaloriesG, proteinMaxByWeightG));
+    let proteinG = hasRenalRestriction
         ? proteinByWeightG
         : Math.max(proteinByWeightG, proteinByRatioG);
+    if (!hasRenalRestriction) {
+        proteinG = Math.min(proteinG, proteinAbsoluteMaxG);
+    }
+    if (medicalConditions.has("pregnancy") && !hasRenalRestriction) {
+        proteinG = Math.max(proteinG, PREGNANCY_PROTEIN_FLOOR_G);
+    }
     const proteinKcal = proteinG * KCAL_PER_G.protein;
-    // Remaining calories after protein are split between carbs and fat
+    // Remaining calories after protein are redistributed within AMDR guardrails.
     const remaining = Math.max(0, dailyCalorieTarget - proteinKcal);
-    // Carb/fat split is based on their relative percentage within the remaining budget
-    const carbFatTotal = ratios.carbsPct + ratios.fatPct;
-    const carbShare = ratios.carbsPct / carbFatTotal;
-    const fatShare = ratios.fatPct / carbFatTotal;
-    const carbsG = Math.round((remaining * carbShare) / KCAL_PER_G.carbs);
-    const fatG = Math.round((remaining * fatShare) / KCAL_PER_G.fat);
+    const carbDesiredKcal = remaining * (ratios.carbsPct / (ratios.carbsPct + ratios.fatPct));
+    const carbMinKcal = Math.max(dailyCalorieTarget * MACRO_PERCENT_LIMITS.carbs.minPct, medicalConditions.has("pregnancy")
+        ? PREGNANCY_CARB_FLOOR_G * KCAL_PER_G.carbs
+        : 0);
+    const carbMaxKcal = dailyCalorieTarget * MACRO_PERCENT_LIMITS.carbs.maxPct;
+    const fatMinKcal = dailyCalorieTarget * MACRO_PERCENT_LIMITS.fat.minPct;
+    const fatMaxKcal = dailyCalorieTarget * MACRO_PERCENT_LIMITS.fat.maxPct;
+    const carbLowerBound = Math.max(carbMinKcal, remaining - fatMaxKcal);
+    const carbUpperBound = Math.min(carbMaxKcal, remaining - fatMinKcal);
+    const boundedCarbKcal = carbLowerBound <= carbUpperBound
+        ? clampNumber(carbDesiredKcal, carbLowerBound, carbUpperBound)
+        : clampNumber(carbDesiredKcal, 0, remaining);
+    const fatKcal = Math.max(0, remaining - boundedCarbKcal);
+    const carbsG = Math.round(boundedCarbKcal / KCAL_PER_G.carbs);
+    const fatG = Math.round(fatKcal / KCAL_PER_G.fat);
     return { protein: proteinG, carbs: carbsG, fat: fatG };
 }
 // ─── Step-7: Water ───────────────────────────────────────────────────────────

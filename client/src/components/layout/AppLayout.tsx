@@ -194,7 +194,7 @@ export const AppLayout = () => {
 
       <div className="fixed bottom-0 left-1/2 z-40 w-full max-w-[450px] -translate-x-1/2 px-4 pb-safe pb-3">
         <div className="relative">
-          <div className="flex h-[92px] items-end justify-between rounded-[24px] border border-grey-700/50 bg-grey-900/90 px-2 pb-2 shadow-card-lg backdrop-blur-xl">
+          <div className="app-nav flex h-[92px] items-end justify-between rounded-[24px] border border-grey-700/50 bg-grey-900/90 px-2 pb-2 shadow-card-lg backdrop-blur-xl">
             {tabs.slice(0, 2).map((tab) => (
               <NavLink
                 key={tab.to}

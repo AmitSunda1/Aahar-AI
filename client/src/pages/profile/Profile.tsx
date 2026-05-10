@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Loader } from "../../components/ui/Loader";
+import { ProfileSkeleton } from "../../components/ui/skeletons/ProfileSkeleton";
 import { TextInput } from "../../components/ui/TextInput";
 import { Button } from "../../components/ui/Button";
 import {
@@ -224,7 +224,7 @@ export const Profile = () => {
     }
   };
 
-  if (isLoadingMe) return <Loader />;
+  if (isLoadingMe) return <ProfileSkeleton />;
 
   const getInitials = () => {
     if (user?.name) {

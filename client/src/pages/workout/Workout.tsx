@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Loader } from "../../components/ui/Loader";
+import { WorkoutSkeleton } from "../../components/ui/skeletons/WorkoutSkeleton";
 import {
   useCompleteWorkoutSessionMutation,
   useGetHomeDashboardQuery,
@@ -205,7 +205,7 @@ export const Workout = () => {
     }
   };
 
-  if ((isLoading || isFetching) && !data) return <Loader />;
+  if ((isLoading || isFetching) && !data) return <WorkoutSkeleton />;
 
   if (isError || !data?.data.weeklyMealPlan) {
     return (

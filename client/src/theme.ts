@@ -28,17 +28,17 @@ export const theme = {
     colors: {
         /** Color / Base */
         base: {
-            white: "#FFFFFF",
-            black: "#0B0B0B",
+            white: "var(--color-base-white, #FFFFFF)",
+            black: "var(--color-base-black, #0B0B0B)",
         },
 
         /** Color / Grey */
         grey: {
-            900: "#1C1C1E",
-            700: "#4A4A4A",
-            500: "#8E8E93",
-            300: "#D1D1D6",
-            100: "#F2F2F7",
+            900: "var(--color-grey-900, #1C1C1E)",
+            700: "var(--color-grey-700, #4A4A4A)",
+            500: "var(--color-grey-500, #8E8E93)",
+            300: "var(--color-grey-300, #D1D1D6)",
+            100: "var(--color-grey-100, #F2F2F7)",
         },
 
         /** Color / Accent — use sparingly, functional only */

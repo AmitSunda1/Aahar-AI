@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { ThemeProvider } from "./app/ThemeContext";
 import { Provider } from "react-redux";
 import { store } from "./app/store";
 import { Splash } from "./pages/Splash";
@@ -19,6 +20,7 @@ import { InstallPrompt } from "./components/ui/InstallPrompt";
 
 function App() {
   return (
+    <ThemeProvider>
     <Provider store={store}>
       <BrowserRouter>
         <InstallPrompt />
@@ -49,6 +51,7 @@ function App() {
         </Routes>
       </BrowserRouter>
     </Provider>
+    </ThemeProvider>
   );
 }
 

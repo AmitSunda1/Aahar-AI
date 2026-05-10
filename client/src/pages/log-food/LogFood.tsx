@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "../../components/ui/Button";
 import { TextInput } from "../../components/ui/TextInput";
+import { LogFoodSkeleton } from "../../components/ui/skeletons/LogFoodSkeleton";
 import {
   useAnalyzeFoodTextMutation,
   useLogFoodMutation,
@@ -101,6 +102,13 @@ export const LogFood = () => {
   const [success, setSuccess] = useState<LogSuccess | null>(null);
   const [isListening, setIsListening] = useState(false);
   const [voiceSupported, setVoiceSupported] = useState(false);
+  const [isMounting, setIsMounting] = useState(true);
+
+  // Brief skeleton on mount for consistent UX
+  useEffect(() => {
+    const timer = setTimeout(() => setIsMounting(false), 350);
+    return () => clearTimeout(timer);
+  }, []);
 
   const [analyzeFoodText, { isLoading: isAnalyzing }] =
     useAnalyzeFoodTextMutation();
@@ -268,6 +276,8 @@ export const LogFood = () => {
     speechRecognitionRef.current?.stop();
     setIsListening(false);
   };
+
+  if (isMounting) return <LogFoodSkeleton />;
 
   return (
     <div className="min-h-screen bg-base-black px-4 pb-8 pt-6 text-base-white">

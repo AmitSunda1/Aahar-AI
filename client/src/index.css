@@ -1,6 +1,84 @@
 @import "tailwindcss";
 @config "../tailwind.config.ts";
 
+/* ─────────────────────────────────────────────────────────
+   LIGHT THEME OVERRIDES
+   Tailwind v4 exposes @theme tokens as CSS custom properties
+   (e.g. --color-base-black). We override them here at the
+   html[data-theme="light"] level so no component classes need
+   to change — every bg-base-black, text-grey-300, etc. adapts
+   automatically.
+───────────────────────────────────────────────────────── */
+[data-theme="light"] {
+    /* Page background (bg-base-black used on page wrappers) */
+    --color-base-black: #F2F2F7;
+    /* Text (text-base-white used for headings / body) */
+    --color-base-white: #0B0B0B;
+
+    /* Card surfaces */
+    --color-grey-900: #FFFFFF;
+    /* Borders */
+    --color-grey-700: #C7C7CC;
+    /* Muted text — stays neutral */
+    --color-grey-500: #8E8E93;
+    /* Secondary text */
+    --color-grey-300: #3C3C43;
+    /* Body / outer background ring */
+    --color-grey-100: #E5E5EA;
+
+    /* Accent stays the same electric blue */
+    --color-accent-primary: #0B5FFF;
+}
+
+/* Body & root adapt to the same CSS var, so light mode outer area
+   matches the page background. */
+[data-theme="light"] body {
+    background-color: var(--color-grey-100, #E5E5EA);
+    color: var(--color-base-white, #0B0B0B);
+}
+
+[data-theme="light"] #root {
+    background-color: var(--color-base-black, #F2F2F7);
+    box-shadow: 0 0 40px rgba(0,0,0,0.12);
+}
+
+/* Bottom nav light mode */
+[data-theme="light"] .app-nav {
+    background-color: rgba(255, 255, 255, 0.92);
+    border-color: rgba(0, 0, 0, 0.08);
+}
+
+/* ─────────────────────────────────────────────────────────
+   SKELETON SHIMMER ANIMATION
+───────────────────────────────────────────────────────── */
+@keyframes skeleton-shimmer {
+    0%   { background-position: -400px 0; }
+    100% { background-position: 400px 0; }
+}
+
+.skeleton-shimmer {
+    background: linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0.04) 25%,
+        rgba(255, 255, 255, 0.10) 50%,
+        rgba(255, 255, 255, 0.04) 75%
+    );
+    background-size: 800px 100%;
+    animation: skeleton-shimmer 1.6s ease-in-out infinite;
+}
+
+/* Light mode shimmer — darker on white cards */
+[data-theme="light"] .skeleton-shimmer {
+    background: linear-gradient(
+        90deg,
+        rgba(0, 0, 0, 0.05) 25%,
+        rgba(0, 0, 0, 0.12) 50%,
+        rgba(0, 0, 0, 0.05) 75%
+    );
+    background-size: 800px 100%;
+    animation: skeleton-shimmer 1.6s ease-in-out infinite;
+}
+
 @layer base {
     body {
         @apply bg-grey-100 text-base-black font-sans antialiased flex justify-center;

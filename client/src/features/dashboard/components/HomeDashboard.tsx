@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 // import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
-import { Loader } from "../../../components/ui/Loader";
+import { useTheme } from "../../../app/ThemeContext";
+import { DashboardSkeleton } from "../../../components/ui/skeletons/DashboardSkeleton";
 import { useGetMeQuery } from "../../auth/authApi";
 import {
   useGetHomeDashboardQuery,
@@ -440,6 +441,7 @@ const RecommendationList = ({
 
 export const HomeDashboard = () => {
   const navigate = useNavigate();
+  const { theme, toggleTheme } = useTheme();
   const { data: meData } = useGetMeQuery();
   const { data, isLoading, isFetching, isError, refetch } =
     useGetHomeDashboardQuery();
@@ -545,7 +547,7 @@ export const HomeDashboard = () => {
     }
   };
 
-  if ((isLoading || isFetching) && !data) return <Loader />;
+  if ((isLoading || isFetching) && !data) return <DashboardSkeleton />;
 
   if (isError || !data?.data) {
     return (
@@ -607,11 +609,27 @@ export const HomeDashboard = () => {
             • {d.todayStatus.replace(/_/g, " ")}
           </p>
         </div>
-        {/* <div
-          className={`inline-flex shrink-0 items-center rounded-full border px-3 py-1 text-label-sm ${planSourceClass}`}
+
+        {/* Theme Toggle Button */}
+        <button
+          type="button"
+          onClick={toggleTheme}
+          aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-grey-700/50 bg-grey-900/40 transition-all hover:bg-grey-900/70 active:scale-95"
         >
-          {planSourceLabel}
-        </div> */}
+          {theme === "dark" ? (
+            // Sun icon
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="1.8" />
+              <path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+            </svg>
+          ) : (
+            // Moon icon
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          )}
+        </button>
       </div>
 
       {actionError && (
