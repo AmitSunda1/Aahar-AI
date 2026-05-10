@@ -1284,8 +1284,8 @@ export const FoodEntryFlow = () => {
 
   const renderFullscreenScanner = () => {
     return (
-      <div className="fixed inset-0 z-[70] bg-black/70">
-        <div className="relative mx-auto h-full w-full max-w-[480px] overflow-hidden bg-black">
+      <div className="fixed inset-0 z-[70] bg-black/70 animate-modal-overlay">
+        <div className="relative mx-auto h-full w-full max-w-[480px] overflow-hidden bg-black animate-soft-rise">
           {!isCameraOpen && (
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(11,95,255,0.28),rgba(9,9,13,0.28)_38%,rgba(0,0,0,0.95)_100%)]" />
           )}

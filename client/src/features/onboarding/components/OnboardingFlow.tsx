@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { useSelector } from "react-redux";
 import type { RootState } from "../../../app/store";
 import { Step1Name } from "./steps/Step1Name";
@@ -26,9 +27,22 @@ const STEPS = [
 
 export const OnboardingFlow = () => {
     const currentStep = useSelector((s: RootState) => s.onboarding.currentStep);
+    const previousStepRef = useRef(currentStep);
     // Clamp to valid range
     const stepIndex = Math.max(0, Math.min(currentStep - 1, STEPS.length - 1));
     const StepComponent = STEPS[stepIndex];
-    return <StepComponent />;
-};
+    const animationClass =
+        currentStep >= previousStepRef.current
+            ? "animate-onboarding-forward"
+            : "animate-onboarding-back";
 
+    useEffect(() => {
+        previousStepRef.current = currentStep;
+    }, [currentStep]);
+
+    return (
+        <div key={currentStep} className={animationClass}>
+            <StepComponent />
+        </div>
+    );
+};

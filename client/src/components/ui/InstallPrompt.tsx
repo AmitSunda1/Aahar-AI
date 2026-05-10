@@ -6,8 +6,8 @@ interface BeforeInstallPromptEvent extends Event {
 }
 
 /**
- * InstallPrompt — shows a subtle "Add to Home Screen" pill when the browser
- * fires the beforeinstallprompt event. Dismissed after install or user ignores it.
+ * InstallPrompt — shows an install sheet when the browser fires
+ * beforeinstallprompt, with manual steps for browsers that need them.
  */
 export const InstallPrompt = () => {
   const [installEvent, setInstallEvent] =
@@ -91,37 +91,39 @@ export const InstallPrompt = () => {
 
   return (
     <div
-      className="fixed left-1/2 top-[max(12px,env(safe-area-inset-top))] z-[80] w-[calc(100%-24px)] max-w-[460px] -translate-x-1/2"
+      className="fixed inset-x-0 bottom-[max(14px,env(safe-area-inset-bottom))] z-[80] mx-auto w-full max-w-[450px] px-4"
       role="banner"
       aria-label="Install Aahar AI"
     >
-      <div className="flex items-center justify-between gap-3 rounded-2xl border border-accent-primary/30 bg-grey-900/95 px-4 py-3 shadow-[0_8px_32px_rgba(11,95,255,0.2)] backdrop-blur-xl">
-        {/* Icon */}
-        <img
-          src="/icons/icon-72x72.png"
-          alt="Aahar AI"
-          className="h-10 w-10 rounded-xl flex-shrink-0"
-        />
+      <div className="relative overflow-hidden rounded-[28px] border border-accent-primary/35 bg-[linear-gradient(145deg,rgba(28,28,30,0.98),rgba(9,13,24,0.96))] p-4 text-base-white shadow-[0_24px_70px_rgba(0,0,0,0.42),0_0_0_1px_rgba(255,255,255,0.04)] backdrop-blur-2xl animate-modal-sheet">
+        <div className="absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-accent-primary/70 to-transparent" />
 
-        {/* Text */}
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-base-white leading-tight">
-            Add to Home Screen
-          </p>
-          <p className="text-xs text-grey-400 mt-0.5">
-            {installEvent
-              ? "Install for a faster, app-like experience"
-              : isiOS
-                ? "Tap Share, then choose Add to Home Screen"
-                : "Open browser menu and tap Install app"}
-          </p>
-        </div>
+        <div className="flex items-start gap-4">
+          <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-[22px] border border-base-white/10 bg-base-white/8 shadow-[0_12px_30px_rgba(11,95,255,0.28)]">
+            <img
+              src="/icons/Aahar-ai-logo.webp"
+              alt="Aahar AI"
+              className="h-12 w-12 rounded-[16px] object-cover"
+            />
+          </div>
 
-        {/* Actions */}
-        <div className="flex items-center gap-2 flex-shrink-0">
+          <div className="min-w-0 flex-1 pt-1">
+            <p className="text-[18px] font-semibold leading-6 text-base-white">
+              Install Aahar AI
+            </p>
+            <p className="mt-1 text-[13px] leading-5 text-grey-300">
+              {installEvent
+                ? "Open it like a real app with faster access to meals, workouts, and progress."
+                : isiOS
+                  ? "Add it to your home screen for quick access from Safari."
+                  : "Pin Aahar AI to your device for a cleaner app-like experience."}
+            </p>
+          </div>
+
           <button
+            type="button"
             onClick={dismissPrompt}
-            className="p-1.5 text-grey-500 hover:text-grey-300 transition-colors"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-grey-700/60 bg-grey-900/70 text-grey-400 transition-all hover:text-base-white active:scale-90"
             aria-label="Dismiss"
           >
             <svg
@@ -136,9 +138,13 @@ export const InstallPrompt = () => {
               <path d="M18 6 6 18M6 6l12 12" />
             </svg>
           </button>
+        </div>
+
+        <div className="mt-5 flex justify-end">
           <button
+            type="button"
             onClick={handleInstall}
-            className="rounded-xl bg-accent-primary px-3 py-2 text-sm font-semibold text-base-white transition-opacity active:opacity-80"
+            className="h-12 min-w-[132px] rounded-full bg-accent-primary px-5 text-[14px] font-semibold text-base-white shadow-[0_12px_30px_rgba(11,95,255,0.34)] transition-all hover:bg-[#245fff] active:scale-[0.98]"
           >
             Install
           </button>
@@ -146,7 +152,7 @@ export const InstallPrompt = () => {
       </div>
 
       {showManualSteps && (
-        <div className="mt-3 rounded-2xl border border-grey-700/70 bg-grey-900/95 p-4 text-grey-200 shadow-card">
+        <div className="mt-3 rounded-[22px] border border-grey-700/70 bg-grey-900/95 p-4 text-grey-200 shadow-card-lg backdrop-blur-xl animate-soft-rise">
           <p className="text-sm font-semibold text-base-white">Install steps</p>
           {isiOS ? (
             <p className="mt-2 text-xs leading-5">
@@ -160,7 +166,7 @@ export const InstallPrompt = () => {
           <button
             type="button"
             onClick={() => setShowManualSteps(false)}
-            className="mt-3 rounded-lg border border-grey-700/70 px-3 py-1.5 text-xs font-medium text-grey-300"
+            className="mt-3 h-9 rounded-full border border-grey-700/70 px-4 text-xs font-semibold text-grey-300 transition-all active:scale-[0.98]"
           >
             Close
           </button>

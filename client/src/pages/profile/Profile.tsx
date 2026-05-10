@@ -833,7 +833,7 @@ export const Profile = () => {
       </section>
 
       {isLogoutConfirmOpen && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-base-black/45 px-4 pb-6 pt-10 backdrop-blur-md">
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-base-black/45 px-4 pb-6 pt-10 backdrop-blur-md animate-modal-overlay">
           <button
             type="button"
             aria-label="Close logout confirmation"
@@ -841,7 +841,7 @@ export const Profile = () => {
             onClick={() => setIsLogoutConfirmOpen(false)}
           />
 
-          <div className="relative w-full max-w-[420px] rounded-[30px] border border-base-white/10 bg-[linear-gradient(180deg,rgba(28,28,30,0.92),rgba(15,18,26,0.9))] p-5 shadow-card-lg backdrop-blur-xl">
+          <div className="relative w-full max-w-[420px] rounded-[30px] border border-base-white/10 bg-[linear-gradient(180deg,rgba(28,28,30,0.92),rgba(15,18,26,0.9))] p-5 shadow-card-lg backdrop-blur-xl animate-modal-sheet">
             <div className="mx-auto mb-4 h-1.5 w-14 rounded-full bg-grey-700/70" />
 
             <div className="flex items-start gap-4">

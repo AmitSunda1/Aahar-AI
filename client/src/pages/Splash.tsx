@@ -13,7 +13,7 @@ export const Splash = () => {
                 <img
                     src={splashlogo}
                     alt="Aahar AI"
-                    className="h-23 w-auto object-contain"
+                    className="h-23 w-auto object-contain animate-soft-drop"
                 />
             </div>
 
@@ -30,11 +30,11 @@ export const Splash = () => {
             {/* Content Container */}
             <div className="relative z-10 w-full px-6 pb-8 flex flex-col text-left">
                 
-                <p className="text-[18px] leading-[26px] font-medium mb-2 pr-4">
+                <p className="text-[18px] leading-[26px] font-medium mb-2 pr-4 animate-soft-rise animate-stagger-1">
                     Your personal nutrition & fitness coach for Indian lifestyles.
                 </p>
 
-                <p className="text-[14px] leading-[22px] text-grey-300 mb-8 max-w-[90%]">
+                <p className="text-[14px] leading-[22px] text-grey-300 mb-8 max-w-[90%] animate-soft-rise animate-stagger-2">
                     Personalized meals and workouts, built around your body and routine.
                 </p>
 
@@ -42,7 +42,7 @@ export const Splash = () => {
                 <div className="flex flex-col gap-3 w-full mt-4">
                     <button
                         onClick={() => navigate("/login")}
-                        className="w-full h-12 flex items-center justify-center bg-base-black/80 backdrop-blur-sm border border-grey-700/50 rounded-full text-[14px] leading-[20px] font-medium text-base-white transition-opacity active:opacity-70"
+                        className="w-full h-12 flex items-center justify-center bg-base-black/80 backdrop-blur-sm border border-grey-700/50 rounded-full text-[14px] leading-[20px] font-medium text-base-white transition-all hover:border-grey-600/70 hover:bg-base-black/90 active:scale-[0.98] active:opacity-70 animate-soft-rise animate-stagger-3"
                     >
                         Continue with Email
                     </button>
@@ -58,7 +58,7 @@ export const Splash = () => {
                     </button> */}
                 </div>
 
-                <p className="text-[11px] leading-[14px] text-grey-500 text-center mt-6">
+                <p className="text-[11px] leading-[14px] text-grey-500 text-center mt-6 animate-soft-rise animate-stagger-3">
                     We don't store any health data until onboarding is complete.
                 </p>
             </div>

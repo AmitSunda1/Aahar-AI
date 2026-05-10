@@ -106,7 +106,7 @@ export const VerifyOtp = () => {
       <div className="absolute top-0 left-0 w-full px-6 pt-12 z-20">
         <button
           onClick={() => navigate(-1)}
-          className="flex items-center gap-2 px-1 py-2 rounded-full bg-transparent text-base-white hover:text-grey-300 transition-colors"
+          className="flex items-center gap-2 px-1 py-2 rounded-full bg-transparent text-base-white hover:text-grey-300 transition-all active:scale-[0.96] animate-soft-drop"
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M19 12H5M12 19l-7-7 7-7"/>
@@ -124,7 +124,7 @@ export const VerifyOtp = () => {
         <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/50 to-black/10" />
       </div>
 
-      <div className="relative z-10 mx-auto mb-12 w-[92%] max-w-md rounded-card border border-grey-700 bg-base-black/80 p-4 shadow-card-lg backdrop-blur-md sm:p-6">
+      <div className="relative z-10 mx-auto mb-12 w-[92%] max-w-md rounded-card border border-grey-700 bg-base-black/80 p-4 shadow-card-lg backdrop-blur-md sm:p-6 animate-soft-rise">
         <h2 className="text-[22px] leading-[30px] font-semibold text-base-white mb-2">
           Check your email
         </h2>
@@ -134,7 +134,7 @@ export const VerifyOtp = () => {
         </p>
 
         {error && (
-          <div className="p-3 mb-4 text-[13px] text-semantic-error bg-semantic-error/10 border border-semantic-error rounded-input">
+          <div className="p-3 mb-4 text-[13px] text-semantic-error bg-semantic-error/10 border border-semantic-error rounded-input animate-soft-rise">
             {(error as any)?.data?.message || "Invalid OTP. Please try again."}
           </div>
         )}
@@ -152,7 +152,7 @@ export const VerifyOtp = () => {
               value={digit}
               onChange={(e) => handleOtpChange(i, e.target.value)}
               onKeyDown={(e) => handleKeyDown(i, e)}
-              className="h-12 min-w-0 w-full rounded-input border border-grey-700 bg-base-black/50 text-center text-[18px] font-semibold text-base-white outline-none transition-colors focus:border-accent-primary focus:ring-1 focus:ring-accent-primary sm:h-14 sm:text-[20px]"
+              className="h-12 min-w-0 w-full rounded-input border border-grey-700 bg-base-black/50 text-center text-[18px] font-semibold text-base-white outline-none transition-all focus:border-accent-primary focus:ring-1 focus:ring-accent-primary sm:h-14 sm:text-[20px]"
             />
           ))}
         </div>
@@ -160,7 +160,7 @@ export const VerifyOtp = () => {
         <button
           onClick={handleVerify}
           disabled={!isComplete || isLoading}
-          className="w-full h-12 font-semibold text-[14px] leading-[20px] text-base-white bg-accent-primary rounded-full hover:bg-accent-primary/90 disabled:opacity-40 transition-colors shadow-card-md mb-6"
+          className="w-full h-12 font-semibold text-[14px] leading-[20px] text-base-white bg-accent-primary rounded-full hover:bg-accent-primary/90 disabled:opacity-40 transition-all active:scale-[0.98] shadow-card-md mb-6"
         >
           {isLoading ? "Verifying..." : "Verify Email"}
         </button>

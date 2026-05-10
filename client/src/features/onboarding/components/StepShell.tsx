@@ -85,7 +85,7 @@ export const StepShell = ({
         {stepNumber > 1 ? (
           <button
             onClick={handleBack}
-            className="w-9 h-9 flex items-center justify-center rounded-full text-base-white hover:bg-grey-900 transition-colors"
+            className="w-9 h-9 flex items-center justify-center rounded-full text-base-white hover:bg-grey-900 transition-all active:scale-95"
             aria-label="Go back"
           >
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
@@ -105,7 +105,7 @@ export const StepShell = ({
         {(skippable || onSkip) && (
           <button
             onClick={handleSkipClick}
-            className="text-body text-grey-500 hover:text-grey-300 transition-colors"
+            className="text-body text-grey-500 hover:text-grey-300 transition-all active:scale-95"
           >
             Skip
           </button>
@@ -115,24 +115,24 @@ export const StepShell = ({
       {/* Progress bar */}
       <div className="w-full h-1 bg-grey-900 rounded-full mb-8 flex-shrink-0">
         <div
-          className="h-full bg-accent-primary rounded-full transition-all duration-500 ease-out"
+          className="h-full bg-accent-primary rounded-full transition-all duration-700 ease-out"
           style={{ width: `${progress}%` }}
         />
       </div>
 
       {/* Heading */}
-      <h1 className="text-h1 font-semibold text-base-white mb-2 flex-shrink-0">
+      <h1 className="text-h1 font-semibold text-base-white mb-2 flex-shrink-0 animate-soft-rise">
         {title}
       </h1>
       {subtitle && (
-        <p className="text-body text-grey-500 mb-8 flex-shrink-0">{subtitle}</p>
+        <p className="text-body text-grey-500 mb-8 flex-shrink-0 animate-soft-rise animate-stagger-1">{subtitle}</p>
       )}
 
       {/* Scrollable content area */}
-      <div className="flex-1 overflow-y-auto min-h-0 scrollbar-hide">{children}</div>
+      <div className="flex-1 overflow-y-auto min-h-0 scrollbar-hide animate-soft-rise animate-stagger-2">{children}</div>
 
       {/* Pinned footer */}
-      <div className="flex-shrink-0 pt-4 pb-8">{renderedFooter}</div>
+      <div className="flex-shrink-0 pt-4 pb-8 animate-soft-rise animate-stagger-3">{renderedFooter}</div>
     </div>
   );
 };

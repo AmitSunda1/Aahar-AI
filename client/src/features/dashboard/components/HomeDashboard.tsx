@@ -148,12 +148,13 @@ const WeightChart = ({
   points: WeightPoint[];
   onLogWeight: (weightKg: number) => Promise<void>;
 }) => {
-  const validPoints = points.filter((point) => Number.isFinite(point.value));
-  if (validPoints.length === 0) return null;
   const [isWeightLogOpen, setIsWeightLogOpen] = useState(false);
   const [weightToLog, setWeightToLog] = useState("");
   const [isSavingWeight, setIsSavingWeight] = useState(false);
   const [weightError, setWeightError] = useState<string | null>(null);
+  const validPoints = points.filter((point) => Number.isFinite(point.value));
+
+  if (validPoints.length === 0) return null;
 
   const formatAxisDate = (rawLabel: string, index: number, total: number) => {
     const parsed = new Date(rawLabel);
@@ -635,10 +636,10 @@ export const HomeDashboard = () => {
   const [animatedKcalProgress, setAnimatedKcalProgress] = useState(0);
   const [selectedMealIndex, setSelectedMealIndex] = useState(0);
 
-  const lastGeneratedLabel = useMemo(() => {
-    if (!data?.meta?.lastPlanGeneratedAt) return "Not generated yet";
-    return new Date(data.meta.lastPlanGeneratedAt).toLocaleString();
-  }, [data?.meta?.lastPlanGeneratedAt]);
+  // const lastGeneratedLabel = useMemo(() => {
+  //   if (!data?.meta?.lastPlanGeneratedAt) return "Not generated yet";
+  //   return new Date(data.meta.lastPlanGeneratedAt).toLocaleString();
+  // }, [data?.meta?.lastPlanGeneratedAt]);
 
   const kcalProgress = useMemo(() => {
     const d = data?.data;
@@ -664,6 +665,15 @@ export const HomeDashboard = () => {
 
     return () => window.cancelAnimationFrame(frame);
   }, [kcalProgress]);
+
+  const todayIsoDay = new Date().getDay() === 0 ? 7 : new Date().getDay();
+  const todayPlan =
+    data?.data.weeklyMealPlan?.days.find((day) => day.dayNumber === todayIsoDay) ??
+    data?.data.weeklyMealPlan?.days[0];
+
+  useEffect(() => {
+    setSelectedMealIndex(0);
+  }, [todayPlan?.dayNumber]);
 
   // const handleProgressUpdate = async (payload: UpdateTodayProgressRequest) => {
   //   setActionError(null);
@@ -754,10 +764,6 @@ export const HomeDashboard = () => {
   const kcalRingOffset =
     kcalRingCircumference -
     (animatedKcalProgress / 100) * kcalRingCircumference;
-  const todayIsoDay = new Date().getDay() === 0 ? 7 : new Date().getDay();
-  const todayPlan =
-    d.weeklyMealPlan?.days.find((day) => day.dayNumber === todayIsoDay) ??
-    d.weeklyMealPlan?.days[0];
   const selectedMeal =
     todayPlan?.meals[selectedMealIndex] ?? todayPlan?.meals[0] ?? null;
   const user = meData?.data?.user;
@@ -770,9 +776,6 @@ export const HomeDashboard = () => {
     d.greetingTitle ||
     "there";
 
-  useEffect(() => {
-    setSelectedMealIndex(0);
-  }, [todayPlan?.dayNumber]);
   // const planSourceLabel =
   //   meta.mealPlanSource === "gemini"
   //     ? "Gemini suggestion"
@@ -1043,14 +1046,14 @@ export const HomeDashboard = () => {
                   : "Refreshed every 7 days from your onboarding profile and goal."}
               </p>
             </div>
-            <div className="rounded-full border border-base-white/10 bg-base-white/6 px-3 py-1.5 text-caption text-grey-300">
+            {/* <div className="rounded-full border border-base-white/10 bg-base-white/6 px-3 py-1.5 text-caption text-grey-300">
               Updated {lastGeneratedLabel}
-            </div>
+            </div> */}
           </div>
 
           {todayPlan ? (
             <div className="mt-5 space-y-4">
-              <div className="rounded-[22px] border border-base-white/10 bg-base-white/5 p-4">
+              {/* <div className="rounded-[22px] border border-base-white/10 bg-base-white/5 p-4">
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <p className="text-caption uppercase tracking-[0.18em] text-grey-500">
@@ -1083,7 +1086,7 @@ export const HomeDashboard = () => {
                     value={`${todayPlan.dailyTargets.fat}g`}
                   />
                 </div>
-              </div>
+              </div> */}
 
               <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 scrollbar-hide">
                 {todayPlan.meals.map((meal, mealIdx) => {

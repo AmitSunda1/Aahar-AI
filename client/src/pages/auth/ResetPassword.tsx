@@ -71,7 +71,7 @@ export const ResetPassword = () => {
       <div className="absolute top-0 left-0 w-full px-6 pt-12 z-20">
         <button
           onClick={() => navigate(-1)}
-          className="flex items-center gap-2 px-1 py-2 rounded-full bg-transparent text-base-white hover:text-grey-300 transition-colors"
+          className="flex items-center gap-2 px-1 py-2 rounded-full bg-transparent text-base-white hover:text-grey-300 transition-all active:scale-[0.96] animate-soft-drop"
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M19 12H5M12 19l-7-7 7-7"/>
@@ -89,7 +89,7 @@ export const ResetPassword = () => {
         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/10" />
       </div>
 
-      <div className="w-full max-w-md p-6 bg-base-black/80 backdrop-blur-md rounded-card border border-grey-700 w-[90%] mx-auto mt-auto mb-12 shadow-card-lg relative z-10">
+      <div className="w-full max-w-md p-6 bg-base-black/80 backdrop-blur-md rounded-card border border-grey-700 w-[90%] mx-auto mt-auto mb-12 shadow-card-lg relative z-10 animate-soft-rise">
         <h2 className="mb-2 text-h2 font-bold text-center text-base-white">
           Reset Password
         </h2>
@@ -98,13 +98,13 @@ export const ResetPassword = () => {
         </p>
 
         {resetPasswordError && (
-          <div className="p-3 mb-4 text-body-sm text-semantic-error bg-semantic-error/10 border border-semantic-error rounded-input">
+          <div className="p-3 mb-4 text-body-sm text-semantic-error bg-semantic-error/10 border border-semantic-error rounded-input animate-soft-rise">
             {resetPasswordError}
           </div>
         )}
 
         {passwordMismatch && (
-          <div className="p-3 mb-4 text-body-sm text-semantic-error bg-semantic-error/10 border border-semantic-error rounded-input">
+          <div className="p-3 mb-4 text-body-sm text-semantic-error bg-semantic-error/10 border border-semantic-error rounded-input animate-soft-rise">
             Passwords do not match.
           </div>
         )}
@@ -120,7 +120,7 @@ export const ResetPassword = () => {
               onChange={(e) => setNewPassword(e.target.value)}
               required
               minLength={6}
-              className="w-full px-4 h-12 bg-base-black/50 border border-grey-700 rounded-input text-base-white placeholder-grey-500 focus:ring-1 focus:ring-accent-primary focus:border-accent-primary outline-none transition-colors"
+              className="w-full px-4 h-12 bg-base-black/50 border border-grey-700 rounded-input text-base-white placeholder-grey-500 focus:ring-1 focus:ring-accent-primary focus:border-accent-primary outline-none transition-all"
               placeholder="Enter new password"
             />
           </div>
@@ -135,7 +135,7 @@ export const ResetPassword = () => {
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
               minLength={6}
-              className="w-full px-4 h-12 bg-base-black/50 border border-grey-700 rounded-input text-base-white placeholder-grey-500 focus:ring-1 focus:ring-accent-primary focus:border-accent-primary outline-none transition-colors"
+              className="w-full px-4 h-12 bg-base-black/50 border border-grey-700 rounded-input text-base-white placeholder-grey-500 focus:ring-1 focus:ring-accent-primary focus:border-accent-primary outline-none transition-all"
               placeholder="Re-enter new password"
             />
           </div>
@@ -143,7 +143,7 @@ export const ResetPassword = () => {
           <button
             type="submit"
             disabled={isLoading || passwordMismatch}
-            className="w-full h-12 mt-2 font-semibold text-[14px] leading-[20px] text-base-white bg-accent-primary rounded-full hover:bg-accent-primary/90 disabled:opacity-50 transition-colors shadow-card-md"
+            className="w-full h-12 mt-2 font-semibold text-[14px] leading-[20px] text-base-white bg-accent-primary rounded-full hover:bg-accent-primary/90 disabled:opacity-50 transition-all active:scale-[0.98] shadow-card-md"
           >
             {isLoading ? "Resetting..." : "Reset Password"}
           </button>
