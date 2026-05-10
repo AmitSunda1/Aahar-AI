@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
+import { useTheme } from "../../app/ThemeContext";
+import { RevealSection } from "../../components/ui/RevealSection";
 import { WorkoutSkeleton } from "../../components/ui/skeletons/WorkoutSkeleton";
 import {
   useCompleteWorkoutSessionMutation,
@@ -39,6 +41,7 @@ const estimateCaloriesBurned = (minutes: number) =>
   Math.max(30, Math.round(minutes * 6));
 
 export const Workout = () => {
+  const { isDark } = useTheme();
   const { data, isLoading, isFetching, isError, refetch } =
     useGetHomeDashboardQuery();
   const [completeWorkoutSession, { isLoading: isSavingSession }] =
@@ -220,31 +223,38 @@ export const Workout = () => {
     );
   }
 
+  const surfaceCardClass = isDark
+    ? "border border-grey-700/50 bg-gradient-to-r from-grey-900/85 to-grey-900/35 shadow-card-lg"
+    : "border border-[#d9e3f5] bg-white shadow-[0_14px_34px_rgba(15,23,42,0.06)]";
+  const secondaryActionClass = isDark
+    ? "border border-grey-700/50 bg-grey-900/40 text-base-white hover:enabled:border-grey-600 hover:enabled:bg-grey-900/60 disabled:border-grey-700/30 disabled:text-grey-500"
+    : "border border-[#d7e1f0] bg-[#f7faff] text-[#1b2430] hover:enabled:border-[#bfd0ea] hover:enabled:bg-[#eef4ff] disabled:border-[#e5ebf5] disabled:text-[#93a0b4]";
+
   return (
     <div className="min-h-screen bg-base-black px-4 pb-8 pt-6 text-base-white">
-      <section className="mb-6 rounded-[26px] border border-grey-700/50 bg-[radial-gradient(circle_at_top_left,rgba(11,95,255,0.22),rgba(9,9,13,0.2)_38%,rgba(9,9,13,0.9)_100%)] p-5 shadow-card-lg">
+      <section className="mb-5 animate-soft-rise">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="inline-flex rounded-full border border-grey-600/70 bg-grey-900/50 px-3 py-1 text-label-sm uppercase tracking-[0.16em] text-grey-300">
+            <p className="text-label-sm uppercase tracking-[0.24em] text-accent-primary/80">
               Today
             </p>
-            <h1 className="mt-3 text-h1">Workout</h1>
-            <p className="mt-1 text-body text-grey-400">
+            <h1 className="mt-2 text-h1">Workout</h1>
+            <p className="mt-1 text-body text-grey-500">
               {formatDateLabel(new Date())}
             </p>
           </div>
 
-          <div className="rounded-[18px] border border-grey-700/60 bg-grey-900/45 px-4 py-3 text-right">
+          {/* <div className={`rounded-[18px] px-4 py-3 text-right ${statusCardClass}`}>
             <p className="text-label-sm uppercase text-grey-500">Status</p>
             <p className="mt-1 text-body-lg font-medium text-base-white">
               {todaySession ? "Done" : todayWorkout ? "Planned" : "Rest"}
             </p>
-          </div>
+          </div> */}
         </div>
       </section>
 
       {/* Stats Overview */}
-      <section className="rounded-[26px] border border-grey-700/50 bg-gradient-to-r from-grey-900/85 to-grey-900/35 p-5 shadow-card-lg mb-6">
+      <RevealSection className={`mb-6 rounded-[26px] p-5 ${surfaceCardClass}`} delay={60}>
         <div className="grid grid-cols-3 gap-3">
           <div>
             <p className="text-label-lg uppercase text-grey-300">Done</p>
@@ -268,22 +278,22 @@ export const Workout = () => {
             <p className="text-body text-grey-500">kcal</p>
           </div>
         </div>
-      </section>
+      </RevealSection>
 
       {actionError && (
-        <div className="mb-4 rounded-[18px] border border-semantic-error/40 bg-semantic-error/10 p-4 text-body text-grey-300">
+        <div className="mb-4 rounded-[18px] border border-semantic-error/40 bg-semantic-error/10 p-4 text-body text-grey-300 animate-soft-rise">
           {actionError}
         </div>
       )}
 
       {actionMessage && (
-        <div className="mb-4 rounded-[18px] border border-semantic-success/40 bg-semantic-success/10 p-4 text-body text-grey-300">
+        <div className="mb-4 rounded-[18px] border border-semantic-success/40 bg-semantic-success/10 p-4 text-body text-grey-300 animate-soft-rise">
           {actionMessage}
         </div>
       )}
 
       {/* Today's Workout Session */}
-      <section className="rounded-[26px] border border-grey-700/50 bg-gradient-to-r from-grey-900/85 to-grey-900/35 p-5 shadow-card-lg mb-6">
+      <RevealSection className={`mb-6 rounded-[26px] p-5 ${surfaceCardClass}`} delay={120}>
         <div className="mb-6">
           <p className="text-label-lg uppercase text-grey-300">Today</p>
           <h2 className="mt-2 text-h2">
@@ -320,7 +330,7 @@ export const Workout = () => {
             type="button"
             onClick={stopAndSave}
             disabled={isSavingSession || (!timerStartedAt && !todayWorkout)}
-            className="h-14 rounded-full border border-grey-700/50 bg-grey-900/40 text-body-lg font-semibold text-base-white transition-all disabled:cursor-not-allowed disabled:border-grey-700/30 disabled:text-grey-500 hover:enabled:border-grey-600 hover:enabled:bg-grey-900/60"
+            className={`h-14 rounded-full text-body-lg font-semibold transition-all disabled:cursor-not-allowed ${secondaryActionClass}`}
           >
             {isSavingSession ? "Saving..." : "Stop & Save"}
           </button>
@@ -329,10 +339,13 @@ export const Workout = () => {
         <p className="mt-4 text-caption text-grey-500">
           Start when you begin. Save when you finish.
         </p>
-      </section>
+      </RevealSection>
 
       {todaySession && (
-        <section className="rounded-[24px] border border-semantic-success/30 bg-semantic-success/10 p-5 shadow-card">
+        <RevealSection
+          className="rounded-[24px] border border-semantic-success/30 bg-semantic-success/10 p-5 shadow-card"
+          delay={180}
+        >
           <p className="text-label-sm uppercase text-semantic-success">
             Today saved
           </p>
@@ -343,7 +356,7 @@ export const Workout = () => {
           <p className="mt-1 text-caption text-grey-500">
             {new Date(todaySession.completedAt).toLocaleString()}
           </p>
-        </section>
+        </RevealSection>
       )}
     </div>
   );

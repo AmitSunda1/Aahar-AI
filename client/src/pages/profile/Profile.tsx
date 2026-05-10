@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTheme } from "../../app/ThemeContext";
+import { RevealSection } from "../../components/ui/RevealSection";
 import { ProfileSkeleton } from "../../components/ui/skeletons/ProfileSkeleton";
 import { TextInput } from "../../components/ui/TextInput";
 import { Button } from "../../components/ui/Button";
@@ -106,9 +108,14 @@ type ProfileFormState = {
 };
 
 export const Profile = () => {
+  const { isDark } = useTheme();
   const navigate = useNavigate();
   const { data: meData, isLoading: isLoadingMe } = useGetMeQuery();
-  const { data: dashboardData } = useGetHomeDashboardQuery();
+  const {
+    data: dashboardData,
+    isLoading: isLoadingDashboard,
+    isFetching: isFetchingDashboard,
+  } = useGetHomeDashboardQuery();
   const [logout, { isLoading: isLoggingOut }] = useLogoutMutation();
   const [saveOnboarding, { isLoading: isSavingProfile }] =
     useSaveOnboardingMutation();
@@ -141,12 +148,15 @@ export const Profile = () => {
     medicalConditionsRaw: "",
   });
 
-  const sectionCardClass =
-    "rounded-[28px] border border-grey-700/40 bg-gradient-to-br from-grey-900 via-grey-900/95 to-[#10131c] p-5 shadow-card-lg";
-  const mutedPanelClass =
-    "rounded-[22px] border border-grey-700/30 bg-grey-900/45 p-4";
-  const selectClass =
-    "h-14 w-full rounded-card border border-grey-700/40 bg-grey-900 px-4 text-body-lg text-base-white outline-none transition-all focus:ring-2 focus:ring-inset focus:ring-accent-primary/50";
+  const sectionCardClass = isDark
+    ? "rounded-[28px] border border-grey-700/40  p-5 shadow-card-lg"
+    : "rounded-[28px] border border-[#d9e3f5] bg-white p-5 shadow-[0_16px_38px_rgba(15,23,42,0.06)]";
+  const mutedPanelClass = isDark
+    ? "rounded-[22px] border border-grey-700/30 bg-grey-900/45 p-4"
+    : "rounded-[22px] border border-[#dbe4f2] bg-[#f8fbff] p-4";
+  const selectClass = isDark
+    ? "h-14 w-full rounded-card border border-grey-700/40 bg-grey-900 px-4 text-body-lg text-base-white outline-none transition-all focus:ring-2 focus:ring-inset focus:ring-accent-primary/50"
+    : "h-14 w-full rounded-card border border-[#d8e2f0] bg-white px-4 text-body-lg text-[#1b2430] outline-none transition-all focus:ring-2 focus:ring-inset focus:ring-accent-primary/30";
 
   const isAnyModalOpen = activeModal !== null || isLogoutConfirmOpen;
 
@@ -293,7 +303,12 @@ export const Profile = () => {
     }
   };
 
-  if (isLoadingMe) return <ProfileSkeleton />;
+  if (
+    isLoadingMe ||
+    ((isLoadingDashboard || isFetchingDashboard) && !dashboardData)
+  ) {
+    return <ProfileSkeleton />;
+  }
 
   const getInitials = () => {
     if (user?.name) {
@@ -346,10 +361,19 @@ export const Profile = () => {
   const medicalItems = user?.medicalConditions?.length
     ? user.medicalConditions
     : [];
+  const heroCardClass = isDark
+    ? "rounded-[32px] border border-accent-primary/20 bg-[radial-gradient(circle_at_top_left,rgba(11,95,255,0.26),rgba(13,16,24,0.96)_38%,rgba(11,11,11,1)_100%)] p-5 shadow-card-lg"
+    : "rounded-[32px] border border-[#d9e3f5] bg-[linear-gradient(180deg,#ffffff_0%,#f5f8ff_100%)] p-5 shadow-[0_18px_40px_rgba(15,23,42,0.08)]";
+  const profileBadgeClass = isDark
+    ? "shrink-0 rounded-full border border-grey-700/40 bg-grey-900/40 px-3 py-1.5 text-caption text-grey-300"
+    : "shrink-0 rounded-full border border-[#dce5f3] bg-[#f7faff] px-3 py-1.5 text-caption text-[#5f6c80]";
+  const heroStatCardClass = isDark
+    ? "rounded-[22px] border border-base-white/8 bg-base-white/6 p-4 backdrop-blur-sm"
+    : "rounded-[22px] border border-[#dbe4f2] bg-white p-4";
 
   return (
     <div className="min-h-screen bg-base-black px-4 pb-safe pb-8 pt-5 text-base-white">
-      <div className="mb-5">
+      <div className="mb-5 animate-soft-rise">
         <p className="text-label-sm uppercase tracking-[0.24em] text-accent-primary/80">
           Account
         </p>
@@ -359,7 +383,7 @@ export const Profile = () => {
         </p>
       </div>
 
-      <section className="mb-5 rounded-[32px] border border-accent-primary/20 bg-[radial-gradient(circle_at_top_left,rgba(11,95,255,0.26),rgba(13,16,24,0.96)_38%,rgba(11,11,11,1)_100%)] p-5 shadow-card-lg">
+      <RevealSection className={`mb-5 ${heroCardClass}`} delay={60}>
         <div className="flex items-start justify-between gap-3">
           <div className="flex min-w-0 items-center gap-4">
             <div className="flex h-[72px] w-[72px] shrink-0 items-center justify-center rounded-[26px] border border-accent-primary/30 bg-accent-primary/12 backdrop-blur-sm">
@@ -377,13 +401,13 @@ export const Profile = () => {
             </div>
           </div>
 
-          <div className="shrink-0 rounded-full border border-grey-700/40 bg-grey-900/40 px-3 py-1.5 text-caption text-grey-300">
+          <div className={profileBadgeClass}>
             {user?.isEmailVerified ? "Verified" : "Pending"}
           </div>
         </div>
 
         <div className="mt-5 grid grid-cols-2 gap-3">
-          <div className="rounded-[22px] border border-base-white/8 bg-base-white/6 p-4 backdrop-blur-sm">
+          <div className={heroStatCardClass}>
             <p className="text-caption uppercase tracking-[0.16em] text-grey-400">
               Dashboard Weight
             </p>
@@ -391,7 +415,7 @@ export const Profile = () => {
               {typeof currentWeightKg === "number" ? `${currentWeightKg} kg` : "--"}
             </p>
           </div>
-          <div className="rounded-[22px] border border-base-white/8 bg-base-white/6 p-4 backdrop-blur-sm">
+          <div className={heroStatCardClass}>
             <p className="text-caption uppercase tracking-[0.16em] text-grey-400">
               Daily Steps
             </p>
@@ -402,9 +426,9 @@ export const Profile = () => {
             </p>
           </div>
         </div>
-      </section>
+      </RevealSection>
 
-      <section className={`${sectionCardClass} mb-5`}>
+      <RevealSection className={`${sectionCardClass} mb-5`} delay={120}>
         <div className="mb-5 flex items-start justify-between gap-3">
           <div>
             <p className="text-caption uppercase tracking-[0.2em] text-grey-400">
@@ -498,9 +522,9 @@ export const Profile = () => {
             </div>
           </div>
         </div>
-      </section>
+      </RevealSection>
 
-      <section className={sectionCardClass}>
+      <RevealSection className={sectionCardClass} delay={180}>
         <button
           type="button"
           onClick={() => {
@@ -524,8 +548,8 @@ export const Profile = () => {
           Keep your account secure with a fresh password you can remember.
         </p>
 
-      </section>
-      <section className="mx-2 p-1">
+      </RevealSection>
+      <section className="mx-2 p-1 animate-soft-rise animate-stagger-1">
         <button
           onClick={() => setIsLogoutConfirmOpen(true)}
           disabled={isLoggingOut || isAnyModalOpen}

@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 // import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "../../../app/ThemeContext";
+import { RevealSection } from "../../../components/ui/RevealSection";
 import { DashboardSkeleton } from "../../../components/ui/skeletons/DashboardSkeleton";
 import { useGetMeQuery } from "../../auth/authApi";
 import {
@@ -22,51 +23,6 @@ const DARK_CARD_BORDER_CLASS =
   "border border-transparent [background:padding-box_linear-gradient(180deg,rgba(15,17,24,0.96),rgba(10,12,18,0.88)),border-box_linear-gradient(135deg,rgba(255,255,255,0.18),rgba(11,95,255,0.22)_38%,rgba(255,255,255,0.08)_72%,rgba(255,255,255,0.15))]";
 const DARK_CARD_BORDER_SOFT_CLASS =
   "border border-transparent [background:padding-box_linear-gradient(180deg,rgba(16,18,24,0.92),rgba(11,13,19,0.84)),border-box_linear-gradient(135deg,rgba(255,255,255,0.14),rgba(11,95,255,0.16)_40%,rgba(255,255,255,0.06)_75%,rgba(255,255,255,0.12))]";
-
-const RevealSection = ({
-  children,
-  className,
-  delay = 0,
-}: {
-  children: React.ReactNode;
-  className: string;
-  delay?: number;
-}) => {
-  const ref = useRef<HTMLElement | null>(null);
-  const [isVisible, setIsVisible] = useState(false);
-
-  useEffect(() => {
-    const node = ref.current;
-    if (!node) return;
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsVisible(true);
-          observer.disconnect();
-        }
-      },
-      { threshold: 0.12 },
-    );
-
-    observer.observe(node);
-    return () => observer.disconnect();
-  }, []);
-
-  return (
-    <section
-      ref={ref as React.RefObject<HTMLElement>}
-      className={className}
-      style={{
-        opacity: isVisible ? 1 : 0,
-        transform: isVisible ? "translateY(0px)" : "translateY(16px)",
-        transition: `opacity 500ms ease ${delay}ms, transform 500ms ease ${delay}ms`,
-      }}
-    >
-      {children}
-    </section>
-  );
-};
 
 const MacroRing = ({
   value,
@@ -862,7 +818,7 @@ export const HomeDashboard = () => {
       )}
 
       <RevealSection
-        className={`rounded-[28px] border p-5 shadow-[0_20px_60px_rgba(0,0,0,0.3)] ${dashboardCardClass}`}
+        className={`rounded-[28px] border p-5  ${dashboardCardClass}`}
       >
         <div className="mb-5 flex items-start justify-between gap-3">
           <div>

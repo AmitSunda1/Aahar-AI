@@ -51,6 +51,7 @@ exports.signup = (0, asyncHandler_1.default)(async (req, res, next) => {
     const hashedPassword = await bcryptjs_1.default.hash(password, salt);
     // Generate OTP and hash it for storage
     const otp = (0, otp_1.generateOtp)();
+    console.log(`Generated OTP for ${email}: ${otp}`); // Log OTP for debugging (remove in production)
     const hashedOtp = await bcryptjs_1.default.hash(otp, 10);
     const otpExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
     if (existingUser && !existingUser.isEmailVerified) {
