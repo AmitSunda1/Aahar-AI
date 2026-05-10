@@ -10,6 +10,7 @@
    automatically.
 ───────────────────────────────────────────────────────── */
 [data-theme="light"] {
+    color-scheme: light;
     /* Page background (bg-base-black used on page wrappers) */
     --color-base-black: #F2F2F7;
     /* Text (text-base-white used for headings / body) */
@@ -147,6 +148,11 @@
 }
 
 @layer base {
+    html {
+        color-scheme: dark;
+        @apply bg-base-black;
+    }
+
     body {
         @apply bg-grey-100 text-base-black font-sans antialiased flex justify-center;
     }

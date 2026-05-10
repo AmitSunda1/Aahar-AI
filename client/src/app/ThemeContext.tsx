@@ -24,10 +24,17 @@ const ThemeContext = createContext<ThemeContextValue>({
 
 const applyTheme = (theme: Theme) => {
   const root = document.documentElement;
+  const themeColorMeta = document.querySelector('meta[name="theme-color"]');
+  const bgColorMeta = document.querySelector('meta[name="background-color"]');
+  
   if (theme === "light") {
     root.setAttribute("data-theme", "light");
+    if (themeColorMeta) themeColorMeta.setAttribute("content", "#F2F2F7");
+    if (bgColorMeta) bgColorMeta.setAttribute("content", "#F2F2F7");
   } else {
     root.removeAttribute("data-theme");
+    if (themeColorMeta) themeColorMeta.setAttribute("content", "#0B0B0B");
+    if (bgColorMeta) bgColorMeta.setAttribute("content", "#0B0B0B");
   }
 };
 
